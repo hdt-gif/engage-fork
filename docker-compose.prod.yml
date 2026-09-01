@@ -1,0 +1,110 @@
+# Production stack for a single host.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# This is a STANDALONE file, not an override for docker-compose.yml. Compose
+# merges `ports` and `volumes` additively, so an override file cannot remove
+# the database and broker ports the development stack publishes. Using this
+# file on its own is the only way to be sure they are closed.
+#
+# Requires .envs/.prod (see prod.env.example) and, for the two paths below,
+# either shell variables or a root .env file.
+
+services:
+
+  redis:
+    image: "redis:alpine"
+    container_name: calliope-redis
+    restart: unless-stopped
+    # No published port: reachable only from the other containers.
+
+  postgres:
+    image: "postgres:12.2-alpine"
+    container_name: calliope-postgres
+    restart: unless-stopped
+    # POSTGRES_PASSWORD comes from the env file. Note that it is applied only
+    # when the data directory is first initialised -- point this at an empty
+    # volume, not one created by the development stack under trust auth.
+    env_file:
+      - .envs/.prod
+    volumes:
+      - ${ENGAGE_POSTGRES_PATH:-./postgres/data}:/var/lib/postgresql/data
+    # No published port.
+
+  short_worker:
+    platform: linux/x86_64
+    build:
+      context: calliope_app
+      dockerfile: compose/Dockerfile
+    image: calliope-short-worker
+    container_name: calliope-short-worker
+    restart: unless-stopped
+    env_file:
+      - .envs/.prod
+    volumes:
+      - ${ENGAGE_DATA_PATH:-./data}:/data
+    depends_on:
+      - redis
+    command: ["compose/run-short-worker.sh"]
+
+  long_worker:
+    platform: linux/x86_64
+    build:
+      context: calliope_app
+      dockerfile: compose/Dockerfile
+    image: calliope-long-worker
+    container_name: calliope-long-worker
+    restart: unless-stopped
+    env_file:
+      - .envs/.prod
+    volumes:
+      - ${ENGAGE_DATA_PATH:-./data}:/data
+    depends_on:
+      - redis
+    command: ["compose/run-long-worker.sh"]
+
+  celery_flower:
+    platform: linux/x86_64
+    build:
+      context: calliope_app
+      dockerfile: compose/Dockerfile
+    image: calliope-celery-flower
+    container_name: calliope-celery-flower
+    restart: unless-stopped
+    env_file:
+      - .envs/.prod
+    # Bound to loopback: reach it through an SSM port-forward, never the
+    # public interface. It still requires FLOWER_BASIC_AUTH to start.
+    ports:
+      - "127.0.0.1:5555:5555"
+    volumes:
+      - ${ENGAGE_DATA_PATH:-./data}:/data
+    depends_on:
+      - redis
+      - short_worker
+      - long_worker
+    command: ["compose/run-celery-flower-prod.sh"]
+
+  app:
+    platform: linux/x86_64
+    build:
+      context: calliope_app
+      dockerfile: compose/Dockerfile
+    image: calliope-app
+    container_name: calliope-app
+    restart: unless-stopped
+    env_file:
+      - .envs/.prod
+    # The source tree is NOT mounted here -- the image built above already
+    # contains it (Dockerfile `COPY . .`), and mounting over it would defeat
+    # the point of building an image at all. Only real state is mounted.
+    volumes:
+      - ${ENGAGE_DATA_PATH:-./data}:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+      - short_worker
+      - long_worker
+    command: ["./wait-for-postgres.sh", "compose/run-calliope-app-prod.sh"]

@@ -172,3 +172,6 @@ data/timeseries/*
 calliope_app/scripts/fixtures/parameters.xlsx
 calliope_app/scripts/fixtures/template_loc_tech_params.xlsx
 calliope_app/scripts/fixtures/template_tech_params.xlsx
+
+# Personal working notes
+FORME.txt
