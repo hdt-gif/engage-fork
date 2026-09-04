@@ -139,13 +139,42 @@ instance is down.
 
 ## Port-forwarding Postgres
 
-The database is bound to the host's loopback, so it is reachable over an SSH
-tunnel and from nowhere else.
+Postgres is bound to `127.0.0.1:5432` on the instance, so it only accepts
+connections that originate on that machine. There is no security group rule for
+it and nothing on the internet can reach it.
+
+An SSH tunnel gets you in anyway, without opening anything. It makes a port on
+your own machine behave as though it were a port on the server, carrying the
+traffic through the SSH connection that already exists:
+
+```
+   your machine                                the instance
+  ┌──────────────┐                          ┌──────────────┐
+  │ client  →    │                          │              │
+  │ localhost:   │  ═══ encrypted SSH ═══►  │ localhost:   │
+  │   5433       │      (port 22)           │   5432       │
+  │              │                          │      │       │
+  │              │                          │      ▼       │
+  │              │                          │  postgres    │
+  └──────────────┘                          └──────────────┘
+```
+
+As far as Postgres is concerned the connection is local — it arrives from the
+SSH daemon on the same host. So you get full database access with no additional
+exposure. The alternative, opening 5432 in the security group, would put the
+database on the public internet.
 
 ```bash
 # leave this running in a terminal
 ssh -i ~/.ssh/engage-hseo.pem -L 5433:localhost:5432 -N ubuntu@3.151.238.7
+#                                │      │         │
+#                                │      │         └ destination, as seen FROM the instance
+#                                │      └─────────── port opened on your machine
+#                                └────────────────── "local forward"
+# -N means "forward only, do not open a shell"
 ```
+
+Note the `localhost` in the middle is the *instance's* localhost, not yours.
 
 Then point any client at `localhost:5433`:
 
@@ -273,7 +302,7 @@ restore that has actually been tested.
 Seven bugs in the inherited codebase, all fixed and committed. Engage could not
 run under `settings.prod` without them.
 
-1. **gunicorn** — referenced by `settings/prod.py` but absent from `requirements.txt`
+1. **gunicorn** — referenced by `settings/prod.py` but not in from `requirements.txt`
 2. **`/opt/python/log`** — the production logging handler writes there; nothing created it, so Django failed at startup
 3. **Static files** — with `DEBUG=False` Django stops serving `STATIC_ROOT`; WhiteNoise now does
 4. **Broker TLS** — `CELERY_BROKER_USE_SSL` was hardcoded on, so workers could not reach a plain Redis container. Now env-configurable, still defaulting to on
