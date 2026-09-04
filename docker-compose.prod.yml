@@ -29,7 +29,13 @@ services:
       - .envs/.prod
     volumes:
       - ${ENGAGE_POSTGRES_PATH:-./postgres/data}:/var/lib/postgresql/data
-    # No published port.
+    # Bound to the host's loopback only, so the database is reachable over an
+    # SSH tunnel but never from the network:
+    #   ssh -L 5433:localhost:5432 ubuntu@<host>
+    # then connect a client to localhost:5433. Note the 127.0.0.1 prefix -- a
+    # bare "5432:5432" would publish it to the whole internet.
+    ports:
+      - "127.0.0.1:5432:5432"
 
   short_worker:
     platform: linux/x86_64
