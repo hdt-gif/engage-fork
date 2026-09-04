@@ -4,6 +4,23 @@ Engage is a free, open-access energy system planning tool that allows multiple u
 
 - Visit the NLR hosted webtool at https://engage.nrel.gov/
 
+---
+
+## HSEO fork
+
+This fork hosts Engage for the **Hawai'i State Energy Office**, ahead of NREL
+ending its hosted service.
+
+| | |
+| --- | --- |
+| **Deployment, networking, SSH and database access** | [DEPLOYMENT.md](DEPLOYMENT.md) |
+| **Running it locally for development** | [RUNNING.md](RUNNING.md) |
+
+The deployment guide also records the upstream bugs fixed to get Engage running
+under `settings.prod` — it could not start in production without them.
+
+---
+
 
 ## Requirements
 - Docker (https://www.docker.com/get-started)
