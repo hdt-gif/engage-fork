@@ -205,7 +205,20 @@ Then open http://localhost:5555 and authenticate with `FLOWER_BASIC_AUTH` from
 
 ## Operating it
 
-All commands run from `~/engage-fork` on the instance.
+**Where to run what.** Two different kinds of command, and they run in
+different places:
+
+| Command | Run it | Controls |
+| --- | --- | --- |
+| `docker compose ...` | **on the instance**, from `~/engage-fork` | the containers |
+| `aws ec2 ...` | **on your own machine** | the instance itself |
+
+`aws ec2 stop-instances` tells Amazon to switch the machine off, so it cannot
+come from the machine — and the AWS CLI is deliberately not installed there.
+Your shell prompt tells you where you are: `ubuntu@ip-...` is the instance,
+anything else is local. `exit` returns.
+
+### On the instance
 
 ```bash
 docker compose -f docker-compose.prod.yml ps        # what is running
@@ -233,7 +246,7 @@ A change to `.envs/.prod` alone needs no rebuild:
 docker compose -f docker-compose.prod.yml up -d --force-recreate
 ```
 
-### Starting and stopping
+### Starting and stopping — from your own machine, not the instance
 
 Roughly $60/month running, $8/month stopped. Stop it when idle.
 
