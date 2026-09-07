@@ -256,6 +256,120 @@ docker exec -it calliope-app python3 manage.py createsuperuser
 
 ---
 
+## Backups
+
+### What runs automatically
+
+`~/backup-engage.sh` on the instance, nightly at 09:15 UTC (23:15 Hawai'i),
+via cron. It writes to `~/backups` and keeps the last 14 of each:
+
+- `engage-db-<timestamp>.sql.gz` — `pg_dump` of the whole database
+- `engage-data-<timestamp>.tar.gz` — the `data/` tree: model inputs,
+  uploaded timeseries, run outputs
+
+```bash
+~/backup-engage.sh          # run one now
+tail ~/backups/backup.log   # what cron did
+ls -lht ~/backups           # what exists
+```
+
+**These land on the same disk as the database.** They protect against a bad
+migration, an accidental delete, or corruption. They do **not** protect against
+losing the volume or the instance — for that they have to leave the box.
+
+### Getting backups off the instance
+
+An S3 bucket exists and is correctly configured:
+
+```
+s3://hseo-engage-backups-699752150149      us-east-2
+  public access blocked · AES256 encryption · versioning on
+  postgres/ expires after 90 days, old versions after 30
+```
+
+The instance **cannot write to it yet** — see the blocker below. Until that is
+resolved, copy backups up from a workstation that has AWS credentials:
+
+```bash
+LATEST=$(ssh -i ~/.ssh/engage-hseo.pem ubuntu@3.151.238.7 \
+  'ls -1t ~/backups/engage-db-*.sql.gz | head -1')
+
+scp -i ~/.ssh/engage-hseo.pem ubuntu@3.151.238.7:"$LATEST" .
+aws s3 cp "$(basename $LATEST)" s3://hseo-engage-backups-699752150149/postgres/
+```
+
+### Blocker: the instance needs an IAM instance profile
+
+For the nightly job to upload by itself, the instance needs an IAM role
+attached. The role already exists and is scoped to this bucket alone:
+
+```
+role:   engage-backup-role
+policy: engage-backup-s3-write  (s3:PutObject, s3:GetObject, s3:ListBucket
+                                 on hseo-engage-backups-699752150149 only)
+```
+
+What is missing is the instance profile that binds the role to the instance.
+Creating one requires `iam:CreateInstanceProfile` and
+`iam:AddRoleToInstanceProfile`, which the current user does not have. Someone
+with IAM administration needs to run:
+
+```bash
+aws iam create-instance-profile --instance-profile-name engage-backup-profile
+aws iam add-role-to-instance-profile \
+  --instance-profile-name engage-backup-profile --role-name engage-backup-role
+
+aws ec2 associate-iam-instance-profile --region us-east-2 \
+  --instance-id i-0c251de2dc1a35767 \
+  --iam-instance-profile Name=engage-backup-profile
+```
+
+After that, add the upload to `backup-engage.sh` — no credentials needed on the
+instance, since boto3 and the AWS CLI pick up the role automatically:
+
+```bash
+aws s3 cp "$DIR/engage-db-$STAMP.sql.gz"   s3://hseo-engage-backups-699752150149/postgres/
+aws s3 cp "$DIR/engage-data-$STAMP.tar.gz" s3://hseo-engage-backups-699752150149/data/
+```
+
+Using a long-lived access key on the instance instead would work but is worse:
+keys sit on disk, do not rotate, and belong to a person rather than the machine.
+
+### Restoring
+
+Tested 7 Sep 2026 — a dump was restored into a scratch database and the row
+counts matched the live one exactly.
+
+```bash
+PW=$(grep '^POSTGRES_PASSWORD=' ~/engage-fork/.envs/.prod | cut -d= -f2-)
+
+# restore into a scratch database first, always
+docker exec -e PGPASSWORD="$PW" calliope-postgres \
+  psql -U postgres -d postgres -c "create database restoretest;"
+
+gunzip -c ~/backups/engage-db-<timestamp>.sql.gz \
+  | docker exec -i -e PGPASSWORD="$PW" calliope-postgres psql -U postgres -d restoretest
+
+# check it looks right
+docker exec -e PGPASSWORD="$PW" calliope-postgres psql -U postgres -d restoretest \
+  -c "select count(*) from auth_user;"
+```
+
+To restore over the live database, stop the app and workers first so nothing
+writes during the load:
+
+```bash
+cd ~/engage-fork
+docker compose -f docker-compose.prod.yml stop app short_worker long_worker
+# drop and recreate `postgres`, load the dump, then:
+docker compose -f docker-compose.prod.yml start app short_worker long_worker
+```
+
+Restore the `data/` archive alongside it — the database stores file *paths*, so
+a database restored without its files has broken references.
+
+---
+
 ## Verification performed
 
 Sanity-checked with the sample dataset bundled in `api/fixtures/` — the
@@ -285,7 +399,7 @@ costs across five regions — matching a local run of the same model.
 | --- | --- |
 | **No TLS** | Passwords cross the internet in plaintext. Blocked on a domain name. |
 | **No domain** | Raw IP address. Needed before a certificate can be issued. |
-| **No backups** | Nothing is backed up. HSEO is starting from scratch, so once model-building begins this instance is the only copy of that work. |
+| **Backups do not leave the instance** | Nightly dumps run and restore correctly, but they sit on the same disk as the database. Off-instance upload is blocked on an IAM instance profile — see [Backups](#backups). |
 | **IP allowlist only** | HSEO staff cannot reach it. Widening access before TLS would mean staff sending passwords over plain HTTP. |
 | **Personal Mapbox token** | Maps run on a token belonging to a personal account. HSEO needs its own. |
 | **Instance size is a guess** | `t3.large` chosen without knowing real model sizes. Resizing is a stop, change type, start. |
