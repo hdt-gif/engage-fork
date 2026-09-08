@@ -277,8 +277,17 @@ def all_loc_tech_params(request):
     units_in_ids= ParamsManager.get_tagged_params('units_in')
     units_out_ids= ParamsManager.get_tagged_params('units_out')
 
-    carrier_in = Tech_Param.objects.filter(technology=loc_tech.technology, parameter__id__in=units_in_ids).first().value
-    carrier_out = Tech_Param.objects.filter(technology=loc_tech.technology, parameter__id__in=units_out_ids).first().value
+    # A technology has no units_in/units_out parameter until someone sets its
+    # carriers, so .first() is None for a newly created technology and this
+    # view 500s the moment you open one. Fall back to no carrier and let the
+    # lookup below supply defaults, the same way unrecognised carriers are
+    # already handled.
+    _carrier_in_param = Tech_Param.objects.filter(
+        technology=loc_tech.technology, parameter__id__in=units_in_ids).first()
+    _carrier_out_param = Tech_Param.objects.filter(
+        technology=loc_tech.technology, parameter__id__in=units_out_ids).first()
+    carrier_in = _carrier_in_param.value if _carrier_in_param else None
+    carrier_out = _carrier_out_param.value if _carrier_out_param else None
 
     carriers = {}
     for carrier in model.carriers.all():
@@ -288,8 +297,9 @@ def all_loc_tech_params(request):
         if carrier not in carriers.keys():
             carriers[carrier] = {'rate':'kW','quantity':'kWh'}
 
-    carrier_in = carriers[carrier_in]
-    carrier_out = carriers[carrier_out]
+    _default_units = {'rate': 'kW', 'quantity': 'kWh'}
+    carrier_in = carriers.get(carrier_in, _default_units)
+    carrier_out = carriers.get(carrier_out, _default_units)
     carriers = [{'name':c,'rate':v['rate'],'quantity':v['quantity']} for c,v in carriers.items()]
 
     for param in parameters:

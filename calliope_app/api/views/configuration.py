@@ -1012,7 +1012,17 @@ def update_scenario(request):
     """
 
     model_uuid = request.POST["model_uuid"]
-    scenario_id = request.POST["scenario_id"]
+    # The scenarios page posts this from a <select> that is empty until a
+    # scenario exists, and jQuery omits undefined values entirely -- so a model
+    # with no scenarios yet sent no scenario_id and this raised a KeyError,
+    # surfacing as a 500 with no explanation.
+    scenario_id = request.POST.get("scenario_id")
+    if not scenario_id:
+        return HttpResponse(
+            json.dumps({"message": "No scenario selected."}),
+            content_type="application/json",
+            status=400,
+        )
     scenario_description = escape(request.POST["description"].strip())
     scenario_name = escape(request.POST["name"].strip())
     form_data = json.loads(request.POST["form_data"])

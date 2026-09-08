@@ -92,8 +92,9 @@ $( document ).ready(function() {
 function save_scenario_settings() {
 
 	var model_uuid = $('#header').data('model_uuid'),
-		scenario_id = $("#scenario option:selected").data('id')
+		scenario_id = $("#scenario option:selected").data('id'),
 		form_data = $("#form_scenario_settings :input").serializeJSON();
+	if (!scenario_id) { return; }
 	$.ajax({
 		url: '/' + LANGUAGE_CODE + '/api/update_scenario/',
 		type: 'POST',
@@ -116,8 +117,9 @@ function save_scenario_settings() {
 function save_modal_scenario_settings() {
 
 	var model_uuid = $('#header').data('model_uuid'),
-		scenario_id = $("#scenario option:selected").data('id')
+		scenario_id = $("#scenario option:selected").data('id'),
 		form_data = $("#scenario_settings :input").serializeJSON();
+	if (!scenario_id) { return; }
 	$.ajax({
 		url: '/' + LANGUAGE_CODE + '/api/update_scenario/',
 		type: 'POST',
