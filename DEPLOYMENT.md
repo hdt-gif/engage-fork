@@ -348,6 +348,30 @@ aws s3 cp "$DIR/engage-data-$STAMP.tar.gz" s3://hseo-engage-backups-699752150149
 Using a long-lived access key on the instance instead would work but is worse:
 keys sit on disk, do not rotate, and belong to a person rather than the machine.
 
+### Snapshots — the off-instance copy that works today
+
+Until the instance can upload to S3 itself, an EBS snapshot is the way to get a
+copy off the machine. AWS stores snapshots separately from the instance, so one
+survives the volume being destroyed, and it captures the nightly dumps in
+`~/backups` along with everything else.
+
+Run from your own machine, not the instance:
+
+```bash
+scripts/snapshot-engage.sh
+```
+
+It creates a snapshot, keeps the most recent 10, and deletes older ones.
+
+Automating it inside AWS needs Data Lifecycle Manager, which the deploying user
+cannot access. Until then this is manual — worth running before any risky
+change, and on a regular cadence once real data exists.
+
+A snapshot of a running database is crash-consistent, not clean. That is fine
+here: **restore from the `pg_dump` inside the snapshot, not from the raw
+database files.** The dump was written by Postgres itself and is internally
+consistent.
+
 ### Restoring
 
 Tested 7 Sep 2026 — a dump was restored into a scratch database and the row
