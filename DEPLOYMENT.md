@@ -269,6 +269,30 @@ docker exec -it calliope-app python3 manage.py createsuperuser
 
 ---
 
+## Checking it yourself
+
+```bash
+scripts/status.sh
+```
+
+Run from your own machine. It answers, with a real command behind each line
+rather than an assertion:
+
+- **Whose infrastructure is this?** — which AWS account and identity
+- **Is the server on?** — instance state, and what it costs while running
+- **Can you reach it?** — your current IP against the firewall allowlist, plus
+  whether the app actually answers
+- **Is every part running?** — all six containers
+- **Is it doing its job?** — users, models, and how many solves succeeded
+- **Are backups happening?** — latest local copy, latest in S3, and whether the
+  nightly job is still scheduled
+- **What is connected?** — which integrations have credentials and which are
+  dark, including whether HTTPS exists
+- **Is anything broken?** — server errors in the last 24 hours
+
+A failing line prints the command to investigate further. If the instance is
+stopped it says so and stops, since nothing else can be checked.
+
 ## Backups
 
 ### What runs automatically
