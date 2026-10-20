@@ -1,0 +1,1236 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Engage Plan Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@500;700&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Engage-style app shell (top bar + tabs), then a parameters rail beside a results column. */
+:root {
+  --bg: #f3f4f6; --surface: #ffffff; --sunk: #eceef1;
+  --ink: #1b2230; --muted: #5a6274; --line: #d9dce3;
+  --accent: #b86e00; --accent-ink: #8a5200; --accent-soft: #fbefd9;
+  --good: #1f7a4d; --good-bg: #e2f3ea; --warn: #8a6a00; --warn-bg: #f8eecb; --crit: #c23b3a; --crit-bg: #fbe4e3;
+  --s-firm: #4a3aa7; --s-oil: #eb6834; --s-wind: #2a78d6; --s-solar: #eda100; --s-batt: #1baf7a;
+  --seq-0: #e6f4f1; --seq-1: #a9dcd2; --seq-2: #5fbcab; --seq-3: #1f8f7c; --seq-4: #0b5d50;
+  --display: "Saira Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151c; --surface: #1a1f29; --sunk: #222834; --ink: #e6e9ef; --muted: #9aa2b3; --line: #2e3544;
+    --accent: #f0a53a; --accent-ink: #f6c27a; --accent-soft: #3a2c14;
+    --good: #6fd3a0; --good-bg: #173326; --warn: #e6c45a; --warn-bg: #362d12; --crit: #f08a89; --crit-bg: #3b1d1d;
+    --s-firm: #9085e9; --s-oil: #d95926; --s-wind: #3987e5; --s-solar: #c98500; --s-batt: #199e70;
+    --seq-0: #173a35; --seq-1: #1d5a50; --seq-2: #2b8273; --seq-3: #4fb3a0; --seq-4: #9be0d2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151c; --surface: #1a1f29; --sunk: #222834; --ink: #e6e9ef; --muted: #9aa2b3; --line: #2e3544;
+  --accent: #f0a53a; --accent-ink: #f6c27a; --accent-soft: #3a2c14;
+  --good: #6fd3a0; --good-bg: #173326; --warn: #e6c45a; --warn-bg: #362d12; --crit: #f08a89; --crit-bg: #3b1d1d;
+  --s-firm: #9085e9; --s-oil: #d95926; --s-wind: #3987e5; --s-solar: #c98500; --s-batt: #199e70;
+  --seq-0: #173a35; --seq-1: #1d5a50; --seq-2: #2b8273; --seq-3: #4fb3a0; --seq-4: #9be0d2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 0.9375rem/1.55 var(--body); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
+p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* app shell */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding-inline: 16px; }
+.topbar-in { max-width: 82rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; padding-block: 0.7rem; }
+.brand { font: 700 1.15rem/1 var(--display); letter-spacing: 0.02em; }
+.brand span { color: var(--muted); font-weight: 500; }
+.crumbs { color: var(--muted); font-size: 0.875rem; min-width: 0; }
+.crumbs b { color: var(--ink); font-weight: 600; }
+.dummy { margin-left: auto; font: 500 0.7rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); background: var(--warn-bg); padding: 0.4rem 0.6rem; border-radius: 4px; }
+.tabs { max-width: 82rem; margin: 0 auto; display: flex; gap: 0.25rem; overflow-x: auto; }
+.tab { padding: 0.6rem 0.9rem; border: 0; background: none; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; cursor: not-allowed; }
+.tab.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; cursor: default; }
+.tab .new { font: 500 0.65rem/1 var(--mono); letter-spacing: 0.08em; color: var(--accent-ink); background: var(--accent-soft); padding: 0.2rem 0.35rem; border-radius: 3px; margin-left: 0.35rem; vertical-align: 1px; }
+
+.page { max-width: 82rem; margin: 0 auto; padding-inline: 16px; padding-block: 1.5rem 3rem; display: grid; gap: 1.5rem; }
+.question { display: grid; gap: 0.5rem; }
+.question .eyebrow { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+.question h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); }
+.question p { color: var(--muted); max-width: 70ch; }
+.layout { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* parameters rail */
+.rail { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1rem; display: grid; gap: 1.1rem; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); }
+@media (max-width: 900px) { .rail { position: static; } }
+.rail h2 { font-size: 1.1rem; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+legend { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.55rem; padding: 0; }
+fieldset.addon legend { color: var(--accent-ink); }
+fieldset.addon { background: var(--accent-soft); margin-inline: -0.5rem; padding: 0.75rem 0.5rem; border-radius: 6px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) 7.75rem; align-items: center; gap: 0.5rem; }
+.field label { font-size: 0.875rem; }
+.field label small { display: block; color: var(--muted); font-size: 0.75rem; }
+.inp { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
+.inp:focus-within { border-color: var(--accent); }
+.inp input { width: 100%; min-width: 0; border: 0; background: none; padding: 0.35rem 0.4rem; text-align: right; font-variant-numeric: tabular-nums; outline: none; }
+.inp span { font: 400 0.72rem/1 var(--mono); color: var(--muted); padding-right: 0.45rem; white-space: nowrap; }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 0.5rem 0.9rem; border-radius: 6px; cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+.btn:hover { border-color: var(--accent); }
+.status { font-size: 0.8125rem; color: var(--muted); min-height: 1.2em; }
+
+/* results */
+.results { display: grid; gap: 1.25rem; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.1rem; display: grid; gap: 0.9rem; min-width: 0; }
+.panel h2 { font-size: 1.2rem; }
+.panel .sub { color: var(--muted); font-size: 0.875rem; max-width: 75ch; }
+.answer { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 1.1rem; display: grid; gap: 0.6rem; }
+.answer .k { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); }
+.answer .big { font: 700 clamp(1.25rem, 3vw, 1.6rem)/1.25 var(--display); }
+.answer .big em { font-style: normal; color: var(--accent-ink); }
+.answer p { color: var(--ink); max-width: 75ch; }
+.chip { display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.75rem/1 var(--mono); padding: 0.32rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.crit { color: var(--crit); background: var(--crit-bg); }
+.chip.good::before { content: "✓"; }
+.chip.warn::before { content: "~"; }
+.chip.crit::before { content: "!"; font-weight: 700; }
+
+.tscroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+th, td { text-align: right; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); vertical-align: bottom; white-space: normal; }
+thead th.us { color: var(--accent-ink); }
+td.us { background: var(--accent-soft); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; background: var(--surface); padding: 0.4rem 0.7rem; cursor: pointer; font-size: 0.8125rem; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.8125rem; color: var(--muted); }
+.legend-row span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sw { width: 0.8rem; height: 0.8rem; border-radius: 2px; display: inline-block; }
+.sw.line { height: 2px; border-radius: 0; background: var(--ink); }
+.sw.dash { height: 0; border-top: 2px dashed var(--ink); border-radius: 0; }
+.chart { position: relative; overflow-x: auto; }
+.chart svg { display: block; width: 100%; min-width: 36rem; height: auto; }
+.chart text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 0.55rem 0.7rem; font-size: 0.8rem; box-shadow: 0 4px 16px rgb(0 0 0 / 0.12); min-width: 12rem; z-index: 2; }
+.tip b { font-family: var(--display); font-size: 0.95rem; }
+.tip div { display: flex; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; }
+.tip i { display: inline-flex; align-items: center; gap: 0.35rem; font-style: normal; color: var(--muted); }
+.linkbtn { border: 0; background: none; color: var(--accent-ink); text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.8125rem; }
+
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.steps div { border-top: 2px solid var(--accent); padding-top: 0.6rem; display: grid; gap: 0.3rem; align-content: start; }
+.steps b { font-family: var(--display); font-size: 1.05rem; }
+.steps p { font-size: 0.875rem; color: var(--muted); }
+.steps code, .panel code { font-family: var(--mono); font-size: 0.82em; background: var(--sunk); padding: 0.05em 0.3em; border-radius: 3px; }
+.note { font-size: 0.8125rem; color: var(--muted); max-width: 90ch; }
+.busy .results { opacity: 0.55; transition: opacity 0.15s; }
+@media (prefers-reduced-motion: reduce) { .busy .results { transition: none; } }
+</style>
+<style>
+/* PyPSA add-on wears teal instead of amber. Results read top-down: the answer, the options, the chart, then what's settled. */
+:root { --accent: #0f7a6b; --accent-ink: #0b5d50; --accent-soft: #dcf0ec; --accent-line: #9ccfc5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #4fd1bb; --accent-ink: #8fe3d3; --accent-soft: #14332d; --accent-line: #2b6b5f; } }
+:root[data-theme="dark"] { --accent: #4fd1bb; --accent-ink: #8fe3d3; --accent-soft: #14332d; --accent-line: #2b6b5f; }
+
+.results { gap: 1.5rem; }
+.kicker { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+.panel > header { display: grid; gap: 0.35rem; }
+
+/* 1. hero answer */
+.hero { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 10px; padding: 1.4rem; display: grid; gap: 1.25rem; }
+.hero-top { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; align-items: end; }
+.hero-cost { display: grid; gap: 0.2rem; }
+.hero-cost .n { font: 700 clamp(2.4rem, 6vw, 3.4rem)/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hero-cost .n small { font-size: 0.45em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.kpis { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; }
+.kpi { display: grid; gap: 0.1rem; }
+.kpi b { font: 700 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 0.8125rem; color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+@media (max-width: 700px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--sunk); border-radius: 8px; padding: 0.8rem 0.9rem; display: grid; gap: 0.35rem; align-content: start; }
+.tile .nm { font-size: 0.8125rem; color: var(--muted); }
+.tile .mw { font: 700 1.6rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.tile .mw small { font-size: 0.55em; font-weight: 500; color: var(--muted); }
+.meter { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--ink); border-radius: 3px; }
+.tile .of { font: 400 0.7rem/1 var(--mono); color: var(--muted); }
+.mixwrap { display: grid; gap: 0.5rem; }
+.mixwrap h3 { font: 600 0.875rem/1.2 var(--body); }
+.mix { display: flex; height: 1.6rem; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--surface); }
+.mix.sm { height: 0.7rem; border-radius: 3px; }
+.mix i { display: block; height: 100%; min-width: 2px; }
+.mixlab { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; font-size: 0.8125rem; color: var(--muted); }
+.mixlab span { display: inline-flex; gap: 0.4rem; align-items: center; }
+.mixlab b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* 2. margin control */
+.margin { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+.margin .seg button { padding: 0.5rem 0.9rem; font-size: 0.875rem; }
+.margin .seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.fine { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--muted); }
+.fine input { width: 9rem; accent-color: var(--accent); }
+.fine output { font: 600 0.95rem/1 var(--display); color: var(--ink); min-width: 2.8rem; }
+.margin-say { font-size: 1rem; }
+.margin-say b { font-variant-numeric: tabular-nums; }
+
+/* plan cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); gap: 0.9rem; }
+.plan { border: 1px solid var(--line); border-radius: 10px; padding: 1rem; display: grid; gap: 0.75rem; align-content: start; background: var(--surface); }
+.plan.best { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.plan.pick { border-style: dashed; border-color: var(--ink); }
+.plan-h { display: flex; align-items: center; gap: 0.5rem; }
+.mark { width: 1.6rem; height: 1.6rem; flex: none; border-radius: 50%; display: grid; place-items: center; font: 700 0.85rem/1 var(--display); background: var(--ink); color: var(--surface); }
+.plan.best .mark { background: var(--accent); }
+.plan-h h3 { font-size: 1.15rem; flex: 1; min-width: 0; }
+.prem { font: 500 0.75rem/1 var(--mono); padding: 0.32rem 0.5rem; border-radius: 999px; background: var(--sunk); color: var(--ink); white-space: nowrap; }
+.plan.best .prem { background: var(--accent-soft); color: var(--accent-ink); }
+.why { font-size: 0.875rem; color: var(--muted); min-height: 2.6em; }
+.builds { display: grid; gap: 0.3rem; margin: 0; }
+.builds div { display: grid; grid-template-columns: minmax(0, 1fr) auto 3.6rem; gap: 0.5rem; font-size: 0.875rem; align-items: baseline; }
+.builds dt { color: var(--muted); }
+.builds dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.builds .d { font: 400 0.75rem/1 var(--mono); color: var(--muted); text-align: right; }
+.builds .d.ch { color: var(--ink); }
+.plan-f { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plan-f b { color: var(--ink); }
+.empty { border: 1px dashed var(--line); border-radius: 10px; padding: 1rem; color: var(--muted); font-size: 0.875rem; display: grid; place-content: center; text-align: center; min-height: 8rem; }
+
+/* scatter */
+.scatter { position: relative; overflow-x: auto; }
+.scatter svg { display: block; width: 100%; min-width: 34rem; height: auto; }
+.scatter text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.scatter .pt { cursor: pointer; }
+.sw.dot { border-radius: 50%; }
+.sw.ring { border-radius: 50%; border: 2px solid var(--ink); background: transparent; }
+
+/* settled vs open */
+.settle { display: grid; gap: 0.6rem; }
+.srow { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 13rem; gap: 1rem; align-items: center; padding-block: 0.4rem; border-top: 1px solid var(--line); }
+.srow:first-child { border-top: 0; }
+.srow .nm { font-weight: 600; }
+.srow .say { font-size: 0.875rem; color: var(--muted); display: grid; gap: 0.25rem; justify-items: start; }
+.track { position: relative; height: 2.2rem; }
+.track .base { position: absolute; left: 0; right: 0; top: 0.8rem; height: 0.55rem; background: var(--sunk); border-radius: 3px; }
+.track .band { position: absolute; top: 0.8rem; height: 0.55rem; background: var(--accent); border-radius: 3px; min-width: 4px; }
+.track .dot { position: absolute; top: 0.6rem; width: 0.95rem; height: 0.95rem; margin-left: -0.475rem; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); }
+.track .ax { position: absolute; top: 1.55rem; font: 400 0.68rem/1 var(--mono); color: var(--muted); }
+.track .ax.r { right: 0; }
+.chip.plain { color: var(--muted); background: var(--sunk); }
+@media (max-width: 700px) { .srow { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; } }
+
+/* rule out */
+.limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; }
+.limits label { display: grid; gap: 0.3rem; font-size: 0.8125rem; color: var(--muted); }
+.limits select { border: 1px solid var(--line); border-radius: 6px; padding: 0.45rem; background: var(--surface); }
+.limit-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr)); gap: 0.9rem; align-items: start; }
+.verdict-box { display: grid; gap: 0.5rem; align-content: start; padding: 0.25rem 0; }
+.verdict-box .n { font: 700 1.6rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+
+details.about { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1.1rem; }
+details.about summary { cursor: pointer; font: 700 1.05rem/1.2 var(--display); }
+details.about[open] summary { margin-bottom: 0.9rem; }
+/* sub-tabs for the three PyPSA features */
+.subtabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.subtabs button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 0.7rem 0.9rem; cursor: pointer; display: grid; gap: 0.15rem; }
+.subtabs button b { font: 700 1.05rem/1.1 var(--display); }
+.subtabs button span { font-size: 0.8125rem; color: var(--muted); }
+.subtabs button[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); background: var(--accent-soft); }
+@media (max-width: 640px) { .subtabs { grid-template-columns: minmax(0, 1fr); } }
+.tabpanel { display: grid; gap: 1.5rem; }
+.feature-intro { border-top: 4px solid var(--accent); }
+.ctl { display: grid; gap: 0.3rem; font-size: 0.8125rem; color: var(--muted); }
+.fine select { border: 1px solid var(--line); border-radius: 6px; padding: 0.35rem; background: var(--surface); max-width: 16rem; }
+.statrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+@media (max-width: 800px) { .statrow { grid-template-columns: minmax(0, 1fr); } }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; display: grid; gap: 0.4rem; align-content: start; }
+.stat .who { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.stat .n { font: 700 1.7rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.stat p { font-size: 0.875rem; color: var(--muted); }
+.stat.bad { border-color: var(--crit); }
+.stat.okk { border-color: var(--good); }
+.maps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 800px) { .maps { grid-template-columns: minmax(0, 1fr); } }
+.maps figure { margin: 0; display: grid; gap: 0.4rem; min-width: 0; }
+.maps figcaption { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+.maps figcaption b { font-family: var(--display); font-size: 1.05rem; }
+.maps figcaption span { font-size: 0.8125rem; color: var(--muted); }
+.map { background: var(--sunk); border-radius: 10px; overflow-x: auto; }
+.map svg { display: block; width: 100%; min-width: 20rem; height: auto; }
+.map text { font-family: var(--mono); font-size: 11px; }
+.futs input { width: 5.5rem; border: 1px solid var(--line); border-radius: 5px; padding: 0.3rem 0.4rem; text-align: right; background: var(--surface); font-variant-numeric: tabular-nums; }
+.futs td:first-child { white-space: normal; min-width: 10rem; }
+.futs td small { display: block; color: var(--muted); font-size: 0.75rem; }
+.futout { display: grid; gap: 1.5rem; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.9rem; }
+.bars { position: relative; overflow-x: auto; }
+.bars svg { display: block; width: 100%; min-width: 32rem; height: auto; }
+.bars text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.lights { color: var(--crit); font-weight: 600; }
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand">Engage <span>· HSEO</span></span>
+    <span class="crumbs">Models / <b>Sample island 2035</b> / Scenario: base</span>
+    <span class="dummy">Prototype · dummy data</span>
+  </div>
+  <nav class="tabs" aria-label="Model sections">
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Model</button>
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Scenarios</button>
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Runs</button>
+    <button class="tab on" type="button" aria-current="page">Plan explorer<span class="new">ADD-ON · PYPSA</span></button>
+  </nav>
+</header>
+
+<main class="page">
+  <section class="question">
+    <span class="eyebrow">Planning question</span>
+    <h1>What is the cheapest way to meet the island's electricity needs?</h1>
+    <p>Engage gives you one answer. This tab adds three PyPSA features that test it: plans that cost nearly the same, whether the island's lines can carry it, and whether it holds up if the future changes.</p>
+  </section>
+
+  <div class="layout">
+    <aside class="rail" id="rail" aria-label="Scenario parameters"></aside>
+
+    <div class="results">
+      <section class="hero" id="hero" aria-live="polite"></section>
+
+      <nav class="subtabs" role="tablist" aria-label="PyPSA add-on features">
+        <button role="tab" type="button" id="t-alt" aria-controls="tab-alt" data-tab="alt"><b>Alternatives</b><span>Plans that cost about the same</span></button>
+        <button role="tab" type="button" id="t-grid" aria-controls="tab-grid" data-tab="grid"><b>Grid check</b><span>Can the lines carry it?</span></button>
+        <button role="tab" type="button" id="t-fut" aria-controls="tab-fut" data-tab="fut"><b>Uncertain futures</b><span>Does it hold up if things change?</span></button>
+      </nav>
+
+      <div class="tabpanel" id="tab-alt" role="tabpanel" aria-labelledby="t-alt">
+      <section class="panel" aria-labelledby="opt-h">
+        <header>
+          <span class="kicker">Step 1 · Your options</span>
+          <h2 id="opt-h">Plans that cost about the same</h2>
+        </header>
+        <div class="margin">
+          <div class="seg" role="group" aria-label="Extra cost you'd accept" id="presets"></div>
+          <label class="fine" for="slackIn">or fine-tune <input id="slackIn" type="range" min="0" max="15" step="0.5" value="5"><output id="slackOut" for="slackIn">5%</output></label>
+        </div>
+        <p class="margin-say" id="marginSay"></p>
+        <div class="cards" id="cards"></div>
+        <div><button class="linkbtn" type="button" id="tableToggle" aria-expanded="false">Show these plans as a table</button></div>
+        <div class="tscroll" id="altTable" hidden></div>
+      </section>
+
+      <section class="panel" aria-labelledby="sc-h">
+        <header>
+          <span class="kicker">Step 2 · Explore</span>
+          <h2 id="sc-h">Every workable plan, by cost and renewable share</h2>
+          <p class="sub">Each dot is one plan. Dots below the dashed line fit your margin. Click any dot to add it to the cards above as "Your pick".</p>
+        </header>
+        <div class="legend-row" id="scLegend"></div>
+        <div class="scatter" id="scatter"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="set-h">
+        <header>
+          <span class="kicker">Step 3 · What's decided</span>
+          <h2 id="set-h">What's settled and what's still open</h2>
+          <p class="sub">Across every plan in your margin. The bar shows the range each plan builds, and the dot is the cheapest plan.</p>
+        </header>
+        <div class="settle" id="settle"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="lim-h">
+        <header>
+          <span class="kicker">Step 4 · Test a limit</span>
+          <h2 id="lim-h">What if something is off the table?</h2>
+          <p class="sub">For example, set Battery to None to see what the island pays if storage can't be built. Limits that can't meet the renewable target say so.</p>
+        </header>
+        <div class="limits" id="limits"></div>
+        <div class="limit-out" id="limitOut" aria-live="polite"></div>
+      </section>
+
+      </div>
+
+      <div class="tabpanel" id="tab-grid" role="tabpanel" aria-labelledby="t-grid" hidden>
+        <section class="panel feature-intro">
+          <span class="kicker">PyPSA feature · power flow on the network</span>
+          <h2>Will the island's lines carry this plan?</h2>
+          <p class="sub">Engage treats power lines like pipes: power goes wherever it's cheapest, so a plan passes as long as some route fits. Real power splits across every path at once, so some lines carry more than their rating. PyPSA calculates that split, and can test the plan with any one line out of service.</p>
+          <div class="controls">
+            <div class="ctl"><span>Plan</span><div class="seg" role="group" aria-label="Plan to check" id="gPlan"></div></div>
+            <div class="ctl"><span>Batteries sited</span><div class="seg" role="group" aria-label="Battery location" id="gBatt"></div></div>
+          </div>
+        </section>
+        <section class="statrow" id="gStats" aria-live="polite"></section>
+        <section class="panel" aria-labelledby="gmap-h">
+          <header><h2 id="gmap-h">Hour by hour on the network</h2><p class="sub" id="gWhen"></p></header>
+          <div class="controls">
+            <div class="seg" role="group" aria-label="Day" id="gDay"></div>
+            <label class="fine" for="gHour">Hour <input id="gHour" type="range" min="0" max="23" step="1" value="12"><output id="gHourOut" for="gHour">12:00</output></label>
+            <label class="fine" for="gOut">Line out of service <select id="gOut"></select></label>
+            <button class="btn" type="button" id="gWorst">Jump to the worst hour</button>
+          </div>
+          <div class="maps">
+            <figure><figcaption><b>Engage's view</b><span>Power takes whatever route fits</span></figcaption><div class="map" id="mapT"></div></figure>
+            <figure><figcaption><b>PyPSA's view</b><span>Power follows the physics</span></figcaption><div class="map" id="mapP"></div></figure>
+          </div>
+          <div class="legend-row"><span><i class="sw" style="background:var(--muted)"></i>Under 80% of rating</span><span><i class="sw" style="background:var(--warn)"></i>80–100%</span><span><i class="sw" style="background:var(--crit)"></i>Overloaded</span><span>Line thickness = power flowing · labels = MW flowing / rating</span></div>
+        </section>
+        <section class="panel" aria-labelledby="gtab-h">
+          <header><h2 id="gtab-h">Every line across the year</h2><p class="sub">Highest loading in any hour, with all lines in service and with the worst single line out. Upgrade = extra rating needed so the line never overloads.</p></header>
+          <div class="tscroll"><table id="gTable"></table></div>
+        </section>
+      </div>
+
+      <div class="tabpanel" id="tab-fut" role="tabpanel" aria-labelledby="t-fut" hidden>
+        <section class="panel feature-intro">
+          <span class="kicker">PyPSA feature · stochastic optimization</span>
+          <h2>Which plan holds up if the future doesn't go to plan?</h2>
+          <p class="sub">Engage plans for one future: your inputs exactly. PyPSA can plan for several possible futures at once. It picks one build that has to keep the lights on in every future and costs the least on average, weighted by how likely each future is.</p>
+          <div class="tscroll"><table class="futs" id="futTable"></table></div>
+          <div class="actions"><button class="btn primary" type="button" id="futRun">Find the robust plan</button><span class="status" id="futStatus" role="status"></span></div>
+        </section>
+        <section id="futOut" class="futout" aria-live="polite"></section>
+      </div>
+
+      <details class="about">
+        <summary>How this attaches to Engage</summary>
+        <div class="steps">
+          <div><b>1 · Read the Engage model</b><p>A new Django app, <code>alternatives</code>, reads the run's locations, technologies, timeseries and costs from Engage's Postgres database and builds a <code>pypsa.Network</code> from them.</p></div>
+          <div><b>2 · Solve, then search near it</b><p>On the Celery worker Engage already uses, it solves for the cheapest plan with HiGHS, then reruns PyPSA's MGA, pushing each technology up and down within the cost margin.</p></div>
+          <div><b>3 · Show it on the run</b><p>All three features appear as this tab on the run. Alternatives come from PyPSA's MGA, the grid check from its linearised power flow with single-outage checks, and uncertain futures from its stochastic optimization.</p></div>
+        </div>
+        <p class="note" style="margin-top:0.9rem">In this prototype, a grid search in your browser stands in for PyPSA. It covers about 6,700 combinations on five representative days, with simplified dispatch, a made-up five-point island network and simplified DC power flow. Real PyPSA solves each of these as one optimization instead of trying every combination.</p>
+      </details>
+    </div>
+  </div>
+</main>
+<script>
+// Island least-cost model. Dummy data: an O‘ahu-sized island, not real utility figures.
+// Five representative days, weighted to a 365-day year, hourly. Capacity is chosen by
+// exhaustive grid search; each candidate is dispatched with simple merit-order rules.
+const DAYS = [
+  { id: "winter", name: "Winter day",  w: 88, sun: 0.78, wind: 0.32, load: 0.95 },
+  { id: "spring", name: "Spring day",  w: 88, sun: 0.95, wind: 0.40, load: 0.97 },
+  { id: "summer", name: "Summer day",  w: 89, sun: 1.00, wind: 0.48, load: 1.05 },
+  { id: "fall",   name: "Fall day",    w: 90, sun: 0.88, wind: 0.36, load: 1.02 },
+  { id: "kona",   name: "Kona storm",  w: 10, sun: 0.25, wind: 0.07, load: 1.00 }
+];
+const LOAD_SHAPE = [0.66,0.63,0.62,0.62,0.64,0.70,0.78,0.80,0.78,0.76,0.75,0.75,
+                    0.76,0.77,0.78,0.80,0.86,0.94,1.00,0.99,0.94,0.86,0.78,0.71];
+const PEAK_MW = 1150;
+const BATT_HOURS = 4, ETA = Math.sqrt(0.85);
+const HEAT_RATE = 10.5;      // MMBtu/MWh, oil fleet average
+const MMBTU_PER_BBL = 6.3;
+const OIL_VOM = 8;           // $/MWh
+const BIO_HEAT_RATE = 9.5;   // MMBtu/MWh, new combustion turbines on biodiesel
+
+function solarCF(d, h) {
+  const t = h + 0.5;
+  if (t <= 6.5 || t >= 18.5) return 0;
+  return 0.82 * Math.pow(Math.sin(Math.PI * (t - 6.5) / 12), 1.2) * d.sun;
+}
+function windCF(d, h) {
+  return Math.max(0, d.wind + 0.08 * Math.sin(2 * Math.PI * (h - 9) / 24) * (d.wind / 0.4));
+}
+function crf(r, n) { return r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1); }
+
+// Annualized $ per MW-year for each build option
+function annualCosts(p) {
+  const r = p.discount / 100;
+  return {
+    solar: 1000 * (p.solarCapex * crf(r, 25) + 25),
+    wind: 1000 * (p.windCapex * crf(r, 25) + 50),
+    batt: 1000 * (p.battCapex * crf(r, 15) + 30),
+    firm: 1000 * (p.firmCapex * crf(r, 30) + 20)
+  };
+}
+
+// Dispatch one candidate build. ops.reserves=false is how Engage sees the island today
+// (energy balance only, oil can run at any level). ops.reserves=true adds GridPath-style
+// spinning reserve that committed oil units or batteries must hold, and oil units that
+// are online can't run below their minimum stable level.
+// Batteries shave peaks: they discharge only above a threshold T, set per day to the
+// lowest level at which the battery never runs dry when it is called on.
+function simDay(d, build, p, ops, soc0, T, keep) {
+  const P = build.batt, E = build.batt * BATT_HOURS, res = ops.reserves;
+  const scale = PEAK_MW * (1 + p.growth / 100);
+  const day = { load: 0, oil: 0, firm: 0, solar: 0, wind: 0, unserved: 0, shortMWh: 0, shortHours: 0, curtail: 0, ren: 0, starved: false };
+  const rows = keep ? [] : null;
+  let soc = soc0;
+  for (let h = 0; h < 24; h++) {
+    const load = scale * LOAD_SHAPE[h] * d.load;
+    const sol = build.solar * solarCF(d, h) * (p.solarScale ?? 1), wnd = build.wind * windCF(d, h) * (p.windScale ?? 1);
+    const ren = sol + wnd, net = load - ren;
+    const R = res ? (p.resLoad / 100) * load + (p.resSolar / 100) * sol : 0;
+    let dis = 0, ch = 0;
+    if (net > T) {
+      const want = Math.min(P, net - T);
+      dis = Math.min(want, soc * ETA);
+      if (dis < want - 1e-6) day.starved = true;
+    } else if (net < 0) ch = Math.min(P, (E - soc) / ETA, -net);
+    soc += ch * ETA - dis / ETA;
+    let curtail = net < 0 ? -net - ch : 0;
+    const battRes = res ? Math.max(0, Math.min(P - dis + ch, soc * ETA)) : 0;
+    const G0 = Math.max(0, net - dis);
+    const Rth = Math.max(0, R - battRes);
+    const cap = p.oilCap + build.firm;
+    const gen0 = Math.min(G0, cap);
+    const unserved = G0 - gen0;
+    const C = Math.min(cap, G0 + Rth);
+    const short = Math.max(0, Rth - (C - gen0));
+    let gen = Math.min(gen0, p.oilCap);           // existing oil runs first, new turbines after
+    const firmGen = gen0 - gen;
+    if (res) {
+      const minGen = (p.minLoad / 100) * Math.min(C, p.oilCap);
+      if (gen < minGen) {                     // forced-on oil pushes out renewables or charges batteries
+        let extra = minGen - gen;
+        gen = minGen;
+        const absorb = Math.max(0, Math.min(extra, P - ch, (E - soc) / ETA));
+        soc += absorb * ETA; ch += absorb; extra -= absorb;
+        curtail += extra;
+      }
+    }
+    day.load += load; day.oil += gen; day.firm += firmGen; day.unserved += unserved; day.curtail += curtail;
+    const kept = ren > 0 ? 1 - curtail / ren : 0;
+    day.solar += sol * kept; day.wind += wnd * kept;
+    day.ren += ren - curtail; day.shortMWh += short; if (short > 0.5) day.shortHours++;
+    if (keep) {
+      const k = ren > 0 ? 1 - curtail / ren : 0;
+      rows.push({ h, load, oil: gen, firm: firmGen, wind: wnd * k, solar: sol * k, batt: dis, charge: ch, curtail, reserve: R, unserved, short, soc });
+    }
+  }
+  day.soc = soc; day.rows = rows;
+  return day;
+}
+function threshold(d, build, p, ops, soc0) {
+  if (build.batt === 0) return 0;
+  if (!simDay(d, build, p, ops, soc0, 0, false).starved) return 0;
+  let lo = 0, hi = PEAK_MW * 1.6;
+  for (let i = 0; i < 9; i++) {
+    const mid = (lo + hi) / 2;
+    if (simDay(d, build, p, ops, soc0, mid, false).starved) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+function dispatch(build, p, ops, keepHours) {
+  const fuel = p.oilPrice / MMBTU_PER_BBL * HEAT_RATE + OIL_VOM;
+  const t = { load: 0, oil: 0, firm: 0, solar: 0, wind: 0, unserved: 0, shortMWh: 0, shortHours: 0, curtail: 0, ren: 0 };
+  const hours = keepHours ? {} : null;
+  for (const d of DAYS) {
+    let soc = build.batt * BATT_HOURS * 0.5, day;
+    for (let pass = 0; pass < 2; pass++) {   // second pass starts from the first pass's end state
+      const T = threshold(d, build, p, ops, soc);
+      day = simDay(d, build, p, ops, soc, T, keepHours && pass === 1);
+      if (pass === 0) soc = day.soc;
+    }
+    for (const k in t) t[k] += day[k] * d.w;
+    if (keepHours) hours[d.id] = day.rows;
+  }
+  const ac = annualCosts(p);
+  t.fuelCost = t.oil * fuel + t.firm * (p.bioPrice * BIO_HEAT_RATE + OIL_VOM);
+  t.capital = build.solar * ac.solar + build.wind * ac.wind + build.batt * ac.batt + build.firm * ac.firm;
+  t.cost = t.capital + t.fuelCost;
+  t.reShare = 1 - (t.oil + t.firm + t.unserved) / t.load;
+  t.perMWh = t.cost / t.load;
+  t.reliable = t.unserved < 1 && (!ops.reserves || t.shortMWh < 1);
+  t.hours = hours;
+  return t;
+}
+
+const GRID = { solar: [], wind: [], batt: [], firm: [] };
+for (let s = 0; s <= 3000; s += 200) GRID.solar.push(s);
+for (let w = 0; w <= 300; w += 100) GRID.wind.push(w);
+for (let f = 0; f <= 400; f += 100) GRID.firm.push(f);
+for (let b = 0; b <= 2000; b += 100) GRID.batt.push(b);
+
+// Every candidate build, dispatched. Returned so callers can search or explore the space.
+function evaluateAll(p, ops) {
+  const out = [];
+  for (const solar of GRID.solar) for (const wind of GRID.wind) for (const batt of GRID.batt) for (const firm of GRID.firm) {
+    const b = { solar, wind, batt, firm };
+    const r = dispatch(b, p, ops, false);
+    out.push({ build: b, r });
+  }
+  return out;
+}
+function cheapest(list, minRE) {
+  let best = null;
+  for (const c of list) {
+    if (!c.r.reliable || c.r.reShare + 1e-9 < minRE / 100) continue;
+    if (!best || c.r.cost < best.r.cost) best = c;
+  }
+  return best;
+}
+if (typeof module !== "undefined") module.exports = { DAYS, dispatch, evaluateAll, cheapest, GRID };
+// Five-point island network (dummy). Shares of island load at each point.
+const BUSES = [
+  { id: "plant", name: "Power plant coast", load: 0.10, x: 120, y: 250 },
+  { id: "urban", name: "Urban core",        load: 0.50, x: 330, y: 300 },
+  { id: "plain", name: "Central plain",     load: 0.15, x: 300, y: 160 },
+  { id: "north", name: "North shore",       load: 0.10, x: 420, y: 60 },
+  { id: "east",  name: "East side",         load: 0.15, x: 520, y: 230 }
+];
+// x = per-unit reactance (longer, lighter lines have more), cap = rating in MW
+const LINES = [
+  { id: "L1", a: 0, b: 1, x: 1.0, cap: 1100 },
+  { id: "L2", a: 0, b: 2, x: 1.0, cap: 1000 },
+  { id: "L3", a: 2, b: 1, x: 0.6, cap: 300 },
+  { id: "L4", a: 2, b: 3, x: 1.4, cap: 300 },
+  { id: "L5", a: 3, b: 1, x: 2.0, cap: 250 },
+  { id: "L6", a: 1, b: 4, x: 0.8, cap: 400 },
+  { id: "L7", a: 2, b: 4, x: 1.2, cap: 250 }
+];
+const UPGRADE_PER_MW_YR = 90000;   // $ per MW-year of added line rating (dummy)
+
+function lineName(l) { return `${BUSES[l.a].name} – ${BUSES[l.b].name}`; }
+
+// Net injection at each point for one hour of a dispatch, MW. Positive = sends power out.
+function injections(row, battBus) {
+  const inj = BUSES.map(b => -row.load * b.load);
+  inj[0] += row.oil + row.firm;
+  inj[2] += row.solar;
+  inj[3] += row.wind;
+  inj[battBus] += row.batt - row.charge;
+  return inj;
+}
+
+// DC power flow (what PyPSA's linearised flow does): flows follow reactance, by Kirchhoff's laws.
+// Returns flow per line (MW, + means a→b), or null if the outage splits the island.
+function dcFlow(inj, out) {
+  const n = BUSES.length, lines = LINES.filter(l => l.id !== out);
+  if (!connected(lines)) return null;
+  const B = Array.from({ length: n }, () => Array(n).fill(0));
+  for (const l of lines) { const s = 1 / l.x; B[l.a][l.a] += s; B[l.b][l.b] += s; B[l.a][l.b] -= s; B[l.b][l.a] -= s; }
+  // slack at the plant (index 0): solve the reduced system
+  const m = n - 1, A = [], rhs = [];
+  for (let i = 1; i < n; i++) { A.push(B[i].slice(1)); rhs.push(inj[i]); }
+  for (let c = 0; c < m; c++) {               // Gaussian elimination with partial pivoting
+    let piv = c; for (let r = c + 1; r < m; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+    [A[c], A[piv]] = [A[piv], A[c]]; [rhs[c], rhs[piv]] = [rhs[piv], rhs[c]];
+    for (let r = c + 1; r < m; r++) { const f = A[r][c] / A[c][c]; for (let k = c; k < m; k++) A[r][k] -= f * A[c][k]; rhs[r] -= f * rhs[c]; }
+  }
+  const th = Array(m).fill(0);
+  for (let r = m - 1; r >= 0; r--) { let s = rhs[r]; for (let k = r + 1; k < m; k++) s -= A[r][k] * th[k]; th[r] = s / A[r][r]; }
+  const theta = [0, ...th];
+  const flow = {};
+  for (const l of LINES) flow[l.id] = l.id === out ? 0 : (theta[l.a] - theta[l.b]) / l.x;
+  return flow;
+}
+function connected(lines) {
+  const seen = new Set([0]), stack = [0];
+  while (stack.length) { const u = stack.pop(); for (const l of lines) { const v = l.a === u ? l.b : l.b === u ? l.a : -1; if (v >= 0 && !seen.has(v)) { seen.add(v); stack.push(v); } } }
+  return seen.size === BUSES.length;
+}
+
+// Transport model (how Engage moves power): any routing that respects line ratings is allowed.
+// Max-flow from points with surplus to points with deficit; feasible if it moves everything.
+function transportFlow(inj, out) {
+  const n = BUSES.length, S = n, T = n + 1, N = n + 2;
+  const cap = Array.from({ length: N }, () => Array(N).fill(0));
+  for (const l of LINES) if (l.id !== out) { cap[l.a][l.b] += l.cap; cap[l.b][l.a] += l.cap; }
+  let need = 0;
+  inj.forEach((v, i) => { if (v > 0) { cap[S][i] = v; need += v; } else cap[i][T] = -v; });
+  const f = Array.from({ length: N }, () => Array(N).fill(0));
+  let total = 0;
+  for (;;) {
+    const prev = Array(N).fill(-1); prev[S] = S; const q = [S];
+    while (q.length && prev[T] < 0) { const u = q.shift(); for (let v = 0; v < N; v++) if (prev[v] < 0 && cap[u][v] - f[u][v] > 1e-9) { prev[v] = u; q.push(v); } }
+    if (prev[T] < 0) break;
+    let aug = Infinity; for (let v = T; v !== S; v = prev[v]) aug = Math.min(aug, cap[prev[v]][v] - f[prev[v]][v]);
+    for (let v = T; v !== S; v = prev[v]) { f[prev[v]][v] += aug; f[v][prev[v]] -= aug; }
+    total += aug;
+  }
+  const flow = {};
+  for (const l of LINES) flow[l.id] = l.id === out ? 0 : f[l.a][l.b];
+  return { flow, feasible: total >= need - 0.5 };
+}
+
+const loading = (flow, l) => Math.abs(flow[l.id]) / l.cap;
+
+// Whole-year check of one plan's dispatch on the network.
+function gridYear(hours, battBus) {
+  const per = {}; LINES.forEach(l => per[l.id] = { max: 0, maxN1: 0, overH: 0, overHN1: 0 });
+  const s = { overH: 0, overHN1: 0, transportBad: 0, worst: null };
+  for (const d of DAYS) hours[d.id].forEach((row, h) => {
+    const inj = injections(row, battBus), fl = dcFlow(inj, null);
+    let over = false;
+    for (const l of LINES) {
+      const ld = loading(fl, l); per[l.id].max = Math.max(per[l.id].max, ld);
+      if (ld > 1.0001) { over = true; per[l.id].overH += d.w; }
+      if (!s.worst || ld > s.worst.ld) s.worst = { ld, day: d.id, h, line: l.id, out: null };
+    }
+    if (over) s.overH += d.w;
+    let overN1 = false;
+    for (const o of LINES) {
+      const fo = dcFlow(inj, o.id); if (!fo) continue;
+      for (const l of LINES) {
+        if (l.id === o.id) continue;
+        const ld = loading(fo, l); per[l.id].maxN1 = Math.max(per[l.id].maxN1, ld);
+        if (ld > 1.0001) overN1 = true;
+      }
+    }
+    if (overN1) s.overHN1 += d.w;
+    if (!transportFlow(inj).feasible) s.transportBad += d.w;
+  });
+  s.per = per;
+  s.upgradeMW = LINES.reduce((a, l) => a + Math.max(0, per[l.id].max - 1) * l.cap, 0);
+  s.upgradeMWN1 = LINES.reduce((a, l) => a + Math.max(0, Math.max(per[l.id].max, per[l.id].maxN1) - 1) * l.cap, 0);
+  return s;
+}
+if (typeof module !== "undefined") module.exports = { BUSES, LINES, dcFlow, transportFlow, gridYear, injections };
+// Parameters HSEO would set in Engage. Defaults are the dummy sample island.
+const BASE_FIELDS = [
+  { group: "Build costs", fields: [
+    { id: "solarCapex", label: "Utility solar", unit: "$/kW", v: 2100, step: 50 },
+    { id: "windCapex",  label: "Onshore wind", hint: "Max 300 MW of sites", unit: "$/kW", v: 3200, step: 50 },
+    { id: "battCapex",  label: "Battery, 4-hour", unit: "$/kW", v: 1600, step: 50 },
+    { id: "firmCapex",  label: "New firm turbine", hint: "Burns biodiesel", unit: "$/kW", v: 1400, step: 50 },
+    { id: "discount",   label: "Discount rate", unit: "%", v: 7, step: 0.5 }
+  ]},
+  { group: "Fuel", fields: [
+    { id: "oilPrice", label: "Fuel oil", unit: "$/bbl", v: 90, step: 1 },
+    { id: "bioPrice", label: "Biodiesel", unit: "$/MMBtu", v: 25, step: 0.5 }
+  ]},
+  { group: "Island system", fields: [
+    { id: "growth", label: "Load growth", hint: "vs. 1,150 MW peak", unit: "%", v: 0, step: 1 },
+    { id: "oilCap", label: "Oil fleet kept", hint: "After retirements", unit: "MW", v: 1100, step: 50 },
+    { id: "minRE",  label: "Renewable share", hint: "Minimum, of annual energy", unit: "%", v: 40, step: 5 }
+  ]}
+];
+
+function fieldHTML(f) {
+  return `<div class="field"><label for="${f.id}">${f.label}${f.hint ? `<small>${f.hint}</small>` : ""}</label>
+    <div class="inp"><input id="${f.id}" type="number" inputmode="decimal" step="${f.step}" value="${f.v}"><span>${f.unit}</span></div></div>`;
+}
+function renderRail(el, addon) {
+  const groups = BASE_FIELDS.map(g => `<fieldset><legend>${g.group}</legend>${g.fields.map(fieldHTML).join("")}</fieldset>`);
+  if (addon) groups.push(`<fieldset class="addon"><legend>${addon.group}</legend>${addon.fields.map(fieldHTML).join("")}</fieldset>`);
+  el.innerHTML = `<h2>Scenario parameters</h2>${groups.join("")}
+    <div class="actions"><button class="btn primary" id="solve" type="button">Solve</button><button class="btn" id="reset" type="button">Reset to sample</button></div>
+    <p class="status" id="status" role="status"></p>`;
+}
+function allFields(addon) { return BASE_FIELDS.flatMap(g => g.fields).concat(addon ? addon.fields : []); }
+function readParams(addon) {
+  const p = {};
+  for (const f of allFields(addon)) {
+    const n = parseFloat(document.getElementById(f.id).value);
+    p[f.id] = Number.isFinite(n) ? n : f.v;
+  }
+  p.discount = Math.max(0.5, p.discount);
+  return p;
+}
+function wireRail(addon, run) {
+  let timer;
+  const later = () => { clearTimeout(timer); timer = setTimeout(run, 500); };
+  for (const f of allFields(addon)) document.getElementById(f.id).addEventListener("input", later);
+  document.getElementById("solve").addEventListener("click", run);
+  document.getElementById("reset").addEventListener("click", () => {
+    for (const f of allFields(addon)) document.getElementById(f.id).value = f.v;
+    run();
+  });
+}
+// Run heavy work after the browser has painted the "solving" state.
+function solving(msg, work) {
+  document.body.classList.add("busy");
+  document.getElementById("status").textContent = msg;
+  requestAnimationFrame(() => setTimeout(() => {
+    const t0 = performance.now();
+    work();
+    document.body.classList.remove("busy");
+    document.getElementById("status").textContent = `Solved in ${((performance.now() - t0) / 1000).toFixed(1)} s on sample data.`;
+  }, 20));
+}
+
+const fmtMW = v => `${Math.round(v).toLocaleString()} MW`;
+const fmtM = v => `$${(v / 1e6).toLocaleString(undefined, { maximumFractionDigits: 0 })}M`;
+const fmtPct = v => `${(v * 100).toFixed(0)}%`;
+const fmtGWh = v => `${(v / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} GWh`;
+const TECHS = [
+  { k: "solar", name: "Utility solar" }, { k: "wind", name: "Wind" },
+  { k: "batt", name: "Battery (4 h)" }, { k: "firm", name: "New firm turbines" }
+];
+function planSentence(b) {
+  const parts = TECHS.filter(t => b[t.k] > 0).map(t => `${b[t.k].toLocaleString()} MW ${t.name.toLowerCase()}`);
+  return parts.length ? parts.join(", ") : "nothing new";
+}
+const state = { ok: null, best: null, p: null, pick: null, limits: { solar: Infinity, wind: Infinity, batt: Infinity, firm: Infinity } };
+const MAXES = { solar: 3000, wind: 300, batt: 2000, firm: 400 };
+const SHORT = { solar: "Solar", wind: "Wind", batt: "Battery", firm: "New turbines" };
+const MIX = [
+  { k: "solar", name: "Solar", c: "var(--s-solar)" },
+  { k: "wind", name: "Wind", c: "var(--s-wind)" },
+  { k: "oil", name: "Existing oil", c: "var(--s-oil)" },
+  { k: "firm", name: "New turbines", c: "var(--s-firm)" }
+];
+const PRESETS = [[0, "Cheapest only"], [2, "+2%"], [5, "+5%"], [10, "+10%"]];
+
+renderRail(document.getElementById("rail"), null);
+wireRail(null, () => run());
+
+const slackIn = document.getElementById("slackIn");
+const presets = document.getElementById("presets");
+presets.innerHTML = PRESETS.map(([v, l]) => `<button type="button" data-v="${v}">${l}</button>`).join("");
+presets.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  slackIn.value = b.dataset.v; renderExplore();
+});
+slackIn.addEventListener("input", () => renderExplore());
+
+document.getElementById("limits").innerHTML = TECHS.map(t => `<label>${t.name}, at most
+  <select id="lim-${t.k}"><option value="Infinity">No limit</option>${GRID[t.k].map(v => `<option value="${v}">${v === 0 ? "None (0 MW)" : v.toLocaleString() + " MW"}</option>`).join("")}</select></label>`).join("");
+TECHS.forEach(t => document.getElementById(`lim-${t.k}`).addEventListener("change", e => {
+  state.limits[t.k] = parseFloat(e.target.value); renderLimits();
+}));
+
+let run = function () {
+  solving("Solving and collecting alternatives…", () => {
+    const p = readParams(null);
+    state.p = p;
+    const all = evaluateAll(p, { reserves: false });
+    state.ok = all.filter(c => c.r.reliable && c.r.reShare + 1e-9 >= p.minRE / 100);
+    state.best = cheapest(all, p.minRE);
+    state.pick = null;
+    renderExplore();
+  });
+};
+
+const key = b => `${b.solar}-${b.wind}-${b.batt}-${b.firm}`;
+const pctStr = v => `${(v * 100).toFixed(1).replace(".0", "")}%`;
+const slack = () => parseFloat(slackIn.value) / 100;
+const capCost = () => state.best.r.cost * (1 + slack());
+const premium = c => key(c.build) === key(state.best.build) ? "Lowest cost"
+  : `+${fmtM(c.r.cost - state.best.r.cost)}/yr · +${((c.r.cost / state.best.r.cost - 1) * 100).toFixed(1)}%`;
+
+const sharePct = v => v > 0 && v < 0.005 ? "<1%" : fmtPct(v);
+function mixShares(r) {
+  const tot = MIX.reduce((a, m) => a + r[m.k], 0) || 1;
+  return MIX.map(m => ({ ...m, v: r[m.k] / tot }));
+}
+function mixBar(r, sm) {
+  return `<div class="mix${sm ? " sm" : ""}" role="img" aria-label="${mixShares(r).map(m => `${m.name} ${fmtPct(m.v)}`).join(", ")}">`
+    + mixShares(r).filter(m => m.v > 0.004).map(m => `<i style="flex:${m.v};background:${m.c}" title="${m.name} ${fmtPct(m.v)}"></i>`).join("") + `</div>`;
+}
+
+let renderExplore = function () {
+  const { best, p } = state;
+  document.getElementById("slackOut").textContent = `${slackIn.value}%`;
+  presets.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(parseFloat(b.dataset.v) === parseFloat(slackIn.value))));
+  if (!best) {
+    document.getElementById("hero").innerHTML = `<span class="kicker">No workable plan</span>
+      <p class="hero-cost"><span class="n" style="font-size:1.8rem">Nothing reaches ${p.minRE}% renewable while meeting every hour of load.</span></p>
+      <p>Lower the renewable target or keep more oil capacity. The search tops out at 3,000 MW solar, 300 MW wind, 2,000 MW battery and 400 MW of new turbines.</p>`;
+    ["cards", "scatter", "settle", "limitOut", "altTable", "scLegend"].forEach(id => document.getElementById(id).innerHTML = "");
+    document.getElementById("marginSay").textContent = "";
+    return;
+  }
+  renderHero();
+  const near = state.ok.filter(c => c.r.cost <= capCost() + 1);
+  document.getElementById("marginSay").innerHTML = slack() === 0
+    ? `Showing only the cheapest plan. Allow a little extra cost to see alternatives.`
+    : `Paying up to <b>${fmtM(capCost() - best.r.cost)} a year more</b> opens up <b>${(near.length - 1).toLocaleString()} other plans</b>. Here are the ones that differ most:`;
+  renderCards(near);
+  renderScatter(near);
+  renderSettle(near);
+  renderLimits();
+};
+
+function renderHero() {
+  const b = state.best;
+  document.getElementById("hero").innerHTML = `
+    <span class="kicker">The answer · cheapest plan that meets every hour of load</span>
+    <div class="hero-top">
+      <div class="hero-cost"><span class="n">${fmtM(b.r.cost)}<small> a year</small></span></div>
+      <div class="kpis">
+        <div class="kpi"><b>$${b.r.perMWh.toFixed(0)}</b><span>per MWh delivered</span></div>
+        <div class="kpi"><b>${fmtPct(b.r.reShare)}</b><span>renewable (target ${state.p.minRE}%)</span></div>
+      </div>
+    </div>
+    <div class="tiles">${TECHS.map(t => `<div class="tile"><span class="nm">${t.name}</span>
+      <span class="mw">${b.build[t.k].toLocaleString()}<small> MW</small></span>
+      <span class="meter"><i style="width:${b.build[t.k] / MAXES[t.k] * 100}%"></i></span>
+      <span class="of">of ${MAXES[t.k].toLocaleString()} MW possible</span></div>`).join("")}</div>
+    <div class="mixwrap"><h3>Where the island's electricity would come from</h3>${mixBar(b.r)}
+      <div class="mixlab">${mixShares(b.r).map(m => `<span><i class="sw" style="background:${m.c}"></i>${m.name} <b>${sharePct(m.v)}</b></span>`).join("")}</div></div>`;
+}
+
+// The cards: cheapest plus the near-cheapest plans that differ most from it.
+function featured(near) {
+  const best = state.best, out = [{ c: best, title: "Cheapest", why: "The lowest-cost plan. This is the one Engage shows today." }];
+  const seen = new Set([key(best.build)]);
+  const by = (f, dir) => near.slice().sort((a, b) => dir * (f(a) - f(b)) || a.r.cost - b.r.cost)[0];
+  const tries = [
+    [by(c => c.r.reShare, -1), c => ({ title: "Most renewable", why: `Highest renewable share in your margin: ${fmtPct(c.r.reShare)}, up from ${fmtPct(best.r.reShare)}.` })],
+    [by(c => c.build.solar, 1), c => ({ title: "Least solar land", why: `Builds ${(best.build.solar - c.build.solar).toLocaleString()} MW less utility solar, so it needs less land.` })],
+    [by(c => c.build.firm, 1), c => ({ title: "Fewest new turbines", why: c.build.firm === 0 ? "Builds no new fuel-burning turbines." : `Builds ${best.build.firm - c.build.firm} MW fewer new fuel-burning turbines.` })],
+    [by(c => c.build.batt, -1), c => ({ title: "Most storage", why: `Builds ${(c.build.batt - best.build.batt).toLocaleString()} MW more battery storage.` })],
+    [by(c => c.build.wind, 1), c => ({ title: "Least wind", why: `Builds ${best.build.wind - c.build.wind} MW less wind, so fewer turbine sites.` })]
+  ];
+  for (const [c, f] of tries) {
+    if (out.length >= 4) break;
+    if (c && !seen.has(key(c.build))) { seen.add(key(c.build)); out.push({ c, ...f(c) }); }
+  }
+  if (state.pick && !seen.has(key(state.pick.build))) out.push({ c: state.pick, title: "Your pick", why: "The plan you clicked on the chart below.", pick: true });
+  return out.map((f, i) => ({ ...f, mark: String.fromCharCode(65 + i) }));
+}
+
+function cardHTML(f, opts = {}) {
+  const best = state.best, c = f.c;
+  const rows = TECHS.map(t => {
+    const d = c.build[t.k] - best.build[t.k];
+    return `<div><dt>${SHORT[t.k]}</dt><dd>${c.build[t.k].toLocaleString()} MW</dd><span class="d${d ? " ch" : ""}">${d === 0 ? (c === best ? "" : "same") : (d > 0 ? "+" : "−") + Math.abs(d).toLocaleString()}</span></div>`;
+  }).join("");
+  const isBest = key(c.build) === key(best.build);
+  return `<article class="plan${isBest ? " best" : ""}${f.pick ? " pick" : ""}">
+    <div class="plan-h">${f.mark ? `<span class="mark" aria-hidden="true">${f.mark}</span>` : ""}<h3>${f.title}</h3><span class="prem">${premium(c)}</span></div>
+    <p class="why">${f.why}</p>
+    <dl class="builds">${rows}</dl>
+    ${mixBar(c.r, true)}
+    <div class="plan-f"><span><b>${fmtPct(c.r.reShare)}</b> renewable</span><span><b>${fmtM(c.r.cost)}</b>/yr</span></div>
+    ${opts.extra || ""}</article>`;
+}
+
+function renderCards(near) {
+  const feats = featured(near);
+  state.feats = feats;
+  const el = document.getElementById("cards");
+  el.innerHTML = feats.map(f => cardHTML(f)).join("")
+    + (feats.length === 1 ? `<div class="empty">Raise the margin above to see plans that cost a little more but trade solar, wind, storage and turbines differently.</div>` : "");
+  document.getElementById("altTable").innerHTML = `<table><thead><tr><th scope="col">Plan</th>${TECHS.map(t => `<th scope="col">${t.name} (MW)</th>`).join("")}<th scope="col">Annual cost</th><th scope="col">Above cheapest</th><th scope="col">Renewable</th></tr></thead><tbody>`
+    + feats.map(f => `<tr><td>${f.mark} · ${f.title}</td>${TECHS.map(t => `<td>${f.c.build[t.k].toLocaleString()}</td>`).join("")}<td>${fmtM(f.c.r.cost)}</td><td>${f.c === state.best ? "—" : `+${((f.c.r.cost / state.best.r.cost - 1) * 100).toFixed(1)}%`}</td><td>${fmtPct(f.c.r.reShare)}</td></tr>`).join("")
+    + `</tbody></table>`;
+}
+
+function renderScatter(near) {
+  const best = state.best, cap = capCost();
+  const pts = state.ok.filter(c => c.r.cost <= best.r.cost * 1.16);
+  const W = 720, H = 340, L = 62, R = 14, T = 14, B = 42;
+  const xs = pts.map(c => c.r.reShare);
+  const x0 = Math.floor(Math.min(...xs) * 20) / 20, x1 = Math.max(x0 + 0.1, Math.ceil(Math.max(...xs) * 20) / 20);
+  const y0 = best.r.cost / 1e6, y1 = y0 * 1.16;
+  const yStep = Math.max(10, Math.round((y1 - y0) / 5 / 10) * 10);
+  const X = v => L + (W - L - R) * (v - x0) / (x1 - x0);
+  const Y = v => T + (H - T - B) * (1 - (v / 1e6 - y0) / (y1 - y0));
+  let g = "";
+  for (let v = Math.ceil(y0 / yStep) * yStep; v <= y1; v += yStep) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v * 1e6)}" y2="${Y(v * 1e6)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y(v * 1e6) + 4}" text-anchor="end">$${v.toLocaleString()}M</text>`;
+  for (let v = x0; v <= x1 + 1e-9; v += 0.05) g += `<text x="${X(v)}" y="${H - B + 18}" text-anchor="middle">${Math.round(v * 100)}%</text>`;
+  g += `<text x="${L + (W - L - R) / 2}" y="${H - 6}" text-anchor="middle">Renewable share of annual energy</text>`;
+  g += `<text x="${L - 8}" y="${T - 2}" text-anchor="end" style="font-size:10px">per yr</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${Y(cap)}" y2="${Y(cap)}" style="stroke:var(--accent)" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <text x="${W - R - 4}" y="${Y(cap) - 6}" text-anchor="end" style="fill:var(--accent-ink)">your margin · ${fmtM(cap)}</text>`;
+  const featKeys = new Map(state.feats.map(f => [key(f.c.build), f.mark]));
+  const sorted = pts.slice().sort((a, b) => (a.r.cost <= cap) - (b.r.cost <= cap));
+  for (const c of sorted) {
+    if (featKeys.has(key(c.build))) continue;
+    const inM = c.r.cost <= cap + 1;
+    g += `<circle class="pt" data-k="${key(c.build)}" cx="${X(c.r.reShare)}" cy="${Y(c.r.cost)}" r="${inM ? 5 : 4}" style="fill:${inM ? "var(--accent)" : "var(--line)"};stroke:var(--surface)" stroke-width="1.5"/>`;
+  }
+  for (const f of state.feats) {
+    const c = f.c, isBest = key(c.build) === key(best.build);
+    g += `<g class="pt" data-k="${key(c.build)}"><circle cx="${X(c.r.reShare)}" cy="${Y(c.r.cost)}" r="11" style="fill:${isBest ? "var(--accent)" : "var(--ink)"};stroke:var(--surface)" stroke-width="2"/>
+      <text x="${X(c.r.reShare)}" y="${Y(c.r.cost) + 4}" text-anchor="middle" style="fill:var(--surface);font-family:var(--display);font-size:12px;font-weight:700" pointer-events="none">${f.mark}</text></g>`;
+  }
+  const el = document.getElementById("scatter");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Scatter of ${pts.length} plans by renewable share and annual cost; ${near.length} fall within your margin">${g}</svg><div class="tip" hidden></div>`;
+  document.getElementById("scLegend").innerHTML = `<span><i class="sw dot" style="background:var(--accent)"></i>Within your margin (${near.length})</span>
+    <span><i class="sw dot" style="background:var(--line)"></i>Costs more than your margin</span><span><i class="sw dot" style="background:var(--ink)"></i>Lettered = plan cards above</span>`;
+  const byKey = new Map(pts.map(c => [key(c.build), c]));
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip");
+  svg.addEventListener("pointermove", ev => {
+    const t = ev.target.closest(".pt"); if (!t) { tip.hidden = true; return; }
+    const c = byKey.get(t.dataset.k);
+    tip.hidden = false;
+    tip.innerHTML = `<b>${premium(c)}</b>` + TECHS.map(x => `<div><i>${x.name}</i><span>${c.build[x.k].toLocaleString()} MW</span></div>`).join("")
+      + `<div><i>Annual cost</i><span>${fmtM(c.r.cost)}</span></div><div><i>Renewable</i><span>${fmtPct(c.r.reShare)}</span></div><div><i style="color:var(--accent-ink)">Click to add as a card</i></div>`;
+    const box = el.getBoundingClientRect(), px = ev.clientX - box.left + el.scrollLeft, py = ev.clientY - box.top;
+    tip.style.left = `${Math.min(px + 14, el.scrollLeft + el.clientWidth - tip.offsetWidth - 4)}px`;
+    tip.style.top = `${Math.max(4, py - tip.offsetHeight - 14)}px`;
+  });
+  svg.addEventListener("pointerleave", () => { tip.hidden = true; });
+  svg.addEventListener("click", ev => {
+    const t = ev.target.closest(".pt"); if (!t) return;
+    state.pick = byKey.get(t.dataset.k);
+    renderExplore();
+    document.getElementById("cards").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+  });
+}
+
+function renderSettle(near) {
+  const best = state.best;
+  document.getElementById("settle").innerHTML = TECHS.map(t => {
+    const vals = near.map(c => c.build[t.k]), lo = Math.min(...vals), hi = Math.max(...vals), m = MAXES[t.k];
+    const say = hi === 0 ? `<span class="chip plain">Not needed</span><span>No plan in your margin builds any.</span>`
+      : lo === hi ? `<span class="chip good">Settled</span><span>Every plan builds exactly ${lo.toLocaleString()} MW.</span>`
+      : lo > 0 && hi - lo <= 0.25 * m ? `<span class="chip good">Settled</span><span>Every plan builds ${lo.toLocaleString()}–${hi.toLocaleString()} MW.</span>`
+      : lo > 0 ? `<span class="chip good">Some is required</span><span>At least ${lo.toLocaleString()} MW. Anything up to ${hi.toLocaleString()} MW works.</span>`
+      : `<span class="chip warn">Open</span><span>Anywhere from none to ${hi.toLocaleString()} MW.</span>`;
+    return `<div class="srow"><span class="nm">${t.name}</span>
+      <div class="track" role="img" aria-label="${t.name}: ${lo} to ${hi} MW across plans in your margin; cheapest builds ${best.build[t.k]} MW">
+        <span class="base"></span><span class="band" style="left:${lo / m * 100}%;width:${(hi - lo) / m * 100}%"></span>
+        <span class="dot" style="left:${best.build[t.k] / m * 100}%"></span>
+        <span class="ax">0</span><span class="ax r">${m.toLocaleString()} MW</span></div>
+      <div class="say">${say}</div></div>`;
+  }).join("");
+}
+
+function renderLimits() {
+  if (!state.best) return;
+  const lim = state.limits, out = document.getElementById("limitOut");
+  const anyLimit = TECHS.some(t => isFinite(lim[t.k]));
+  if (!anyLimit) { out.innerHTML = `<div class="empty">Pick a limit above to see what it costs.</div>`; return; }
+  let b = null;
+  for (const c of state.ok) if (TECHS.every(t => c.build[t.k] <= lim[t.k]) && (!b || c.r.cost < b.r.cost)) b = c;
+  if (!b) { out.innerHTML = `<div class="verdict-box"><span class="chip crit">No plan fits</span><p>No workable plan meets ${state.p.minRE}% renewable under these limits. Loosen one, or lower the renewable target.</p></div>`; return; }
+  const d = b.r.cost - state.best.r.cost, inside = b.r.cost <= capCost() + 1;
+  out.innerHTML = `<div class="verdict-box">
+      <span class="kicker">Cost of this limit</span>
+      <span class="n">${d < 1 ? "Nothing extra" : `+${fmtM(d)} a year`}</span>
+      <p>${d < 1 ? "The cheapest plan already fits." : `${pctStr(d / state.best.r.cost)} more than the cheapest plan.`}</p>
+      ${inside ? `<span class="chip good">Within your ${slackIn.value}% margin</span>` : `<span class="chip crit">Over your ${slackIn.value}% margin</span>`}
+    </div>` + cardHTML({ c: b, title: "Best under your limits", why: "The cheapest plan that respects every limit you set." });
+}
+
+document.getElementById("tableToggle").addEventListener("click", e => {
+  const t = document.getElementById("altTable"); t.hidden = !t.hidden;
+  e.target.setAttribute("aria-expanded", String(!t.hidden));
+  e.target.textContent = t.hidden ? "Show these plans as a table" : "Hide the table";
+});
+
+/* ---------- Tabs ---------- */
+const TAB = { tab: "alt" };
+const tabBtns = [...document.querySelectorAll(".subtabs button")];
+function showTab(t) {
+  TAB.tab = t;
+  tabBtns.forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  ["alt", "grid", "fut"].forEach(id => document.getElementById(`tab-${id}`).hidden = id !== t);
+  if (t === "grid") renderGrid();
+  if (t === "fut" && !state.fut && state.best) runFutures();
+}
+tabBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+(function () { const h = location.hash.replace("#", ""); if (h === "grid" || h === "futures") showTab(h === "grid" ? "grid" : "fut"); else showTab("alt"); })();
+
+// Re-render dependent tabs whenever the main solve or the margin changes.
+const _renderExplore = renderExplore;
+renderExplore = function () {
+  _renderExplore();
+  if (TAB.tab === "grid") renderGrid();
+  if (TAB.tab === "fut" && !state.fut && state.best) runFutures();
+};
+const _run = run;
+run = function () { G.cache.clear(); state.fut = null; document.getElementById("futOut").innerHTML = ""; _run(); };
+
+/* ---------- Grid check ---------- */
+const G = { plan: "A", battBus: 2, day: "summer", hour: 12, out: "", cache: new Map() };
+const hh = h => `${String(h).padStart(2, "0")}:00`;
+document.getElementById("gOut").innerHTML = `<option value="">None, all lines in</option>` + LINES.map(l => `<option value="${l.id}">${lineName(l)}</option>`).join("");
+document.getElementById("gOut").addEventListener("change", e => { G.out = e.target.value; drawMaps(); });
+document.getElementById("gHour").addEventListener("input", e => { G.hour = +e.target.value; drawMaps(); });
+document.getElementById("gWorst").addEventListener("click", () => {
+  const d = gridData(currentGridPlan()); G.day = d.year.worst.day; G.hour = d.year.worst.h; G.out = "";
+  document.getElementById("gOut").value = ""; renderGrid();
+});
+
+function gridPlans() {
+  const list = (state.feats || []).map(f => ({ id: f.mark, label: `${f.mark} · ${f.title}`, c: f.c }));
+  if (state.fut && state.fut.robust) list.push({ id: "R", label: "Robust plan", c: state.fut.robust.c });
+  return list;
+}
+function currentGridPlan() {
+  const list = gridPlans(); return (list.find(x => x.id === G.plan) || list[0]).c;
+}
+function gridData(c) {
+  const k = `${key(c.build)}@${G.battBus}`;
+  if (!G.cache.has(k)) {
+    const hours = dispatch(c.build, state.p, { reserves: false }, true).hours;
+    G.cache.set(k, { hours, year: gridYear(hours, G.battBus) });
+  }
+  return G.cache.get(k);
+}
+function segBtns(id, opts, cur, on) {
+  const el = document.getElementById(id);
+  el.innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join("");
+  el.onclick = e => { const b = e.target.closest("button"); if (b) on(b.dataset.v); };
+}
+
+function renderGrid() {
+  if (!state.best) return;
+  const plans = gridPlans();
+  if (!plans.some(x => x.id === G.plan)) G.plan = plans[0].id;
+  segBtns("gPlan", plans.map(x => [x.id, x.label]), G.plan, v => { G.plan = v; renderGrid(); });
+  segBtns("gBatt", [[2, "Next to the solar"], [1, "In the urban core"]], G.battBus, v => { G.battBus = +v; renderGrid(); });
+  segBtns("gDay", DAYS.map(d => [d.id, d.name]), G.day, v => { G.day = v; renderGrid(); });
+  const c = currentGridPlan(), { year } = gridData(c);
+  const w = year.worst, wl = LINES.find(l => l.id === w.line);
+  const upN1 = year.upgradeMWN1, upCost = upN1 * UPGRADE_PER_MW_YR;
+  document.getElementById("gStats").innerHTML = `
+    <div class="stat ${year.transportBad ? "bad" : "okk"}"><span class="who">Engage's view</span>
+      <span class="n">${year.transportBad ? `${Math.round(year.transportBad).toLocaleString()} h/yr` : "Fits every hour"}</span>
+      <p>${year.transportBad ? "Hours where no routing fits within line ratings." : "There's always some route that fits within the line ratings, so Engage reports no problem."}</p></div>
+    <div class="stat ${year.overH ? "bad" : "okk"}"><span class="who">PyPSA · actual power flow</span>
+      <span class="n">${year.overH ? `Overloaded ${Math.round(year.overH).toLocaleString()} h/yr` : "No overloads"}</span>
+      <p>${year.overH ? `Worst: ${lineName(wl)} at ${(w.ld * 100).toFixed(0)}% of its rating (${DAYS.find(d => d.id === w.day).name.toLowerCase()}, ${hh(w.h)}).` : "With every line in service, no line goes over its rating."}</p></div>
+    <div class="stat ${upN1 > 0.5 ? "bad" : "okk"}"><span class="who">PyPSA · any one line out</span>
+      <span class="n">${upN1 > 0.5 ? `${Math.round(upN1).toLocaleString()} MW of upgrades` : "Survives any outage"}</span>
+      <p>${upN1 > 0.5 ? `Extra line rating needed so no line overloads when any single line trips. About ${fmtM(upCost)}/yr at a dummy $90k per MW-year.` : "No line overloads when any single line trips."}</p></div>`;
+  document.getElementById("gTable").innerHTML = `<thead><tr><th scope="col">Line</th><th scope="col">Rating</th><th scope="col">Highest loading</th><th scope="col">With worst line out</th><th scope="col">Upgrade needed</th></tr></thead><tbody>`
+    + LINES.map(l => {
+      const v = year.per[l.id], worst = Math.max(v.max, v.maxN1), up = Math.max(0, worst - 1) * l.cap;
+      const pc = x => `<span class="${x > 1.0001 ? "chip crit" : x > 0.8 ? "chip warn" : ""}">${(x * 100).toFixed(0)}%</span>`;
+      return `<tr><td>${lineName(l)}</td><td>${l.cap.toLocaleString()} MW</td><td>${pc(v.max)}</td><td>${pc(v.maxN1)}</td><td>${up > 0.5 ? `${Math.round(up)} MW` : "—"}</td></tr>`;
+    }).join("") + `</tbody>`;
+  drawMaps();
+}
+
+function drawMaps() {
+  if (!state.best) return;
+  document.getElementById("gHour").value = G.hour;
+  document.getElementById("gHourOut").textContent = hh(G.hour);
+  document.getElementById("gOut").value = G.out;
+  const { hours } = gridData(currentGridPlan()), row = hours[G.day][G.hour];
+  const inj = injections(row, G.battBus);
+  const phys = dcFlow(inj, G.out || null), tr = transportFlow(inj, G.out || null);
+  const dayName = DAYS.find(d => d.id === G.day).name;
+  document.getElementById("gWhen").textContent = `${dayName}, ${hh(G.hour)}. Load ${Math.round(row.load).toLocaleString()} MW, solar ${Math.round(row.solar)} MW, wind ${Math.round(row.wind)} MW, oil and turbines ${Math.round(row.oil + row.firm)} MW, battery ${row.batt > 1 ? `discharging ${Math.round(row.batt)}` : row.charge > 1 ? `charging ${Math.round(row.charge)}` : "idle"} MW.`;
+  document.getElementById("mapT").innerHTML = mapSVG(tr.feasible ? tr.flow : null, inj, "Engage's view of line flows");
+  document.getElementById("mapP").innerHTML = phys ? mapSVG(phys, inj, "PyPSA's calculated line flows") : `<p class="sub" style="padding:1rem">Taking this line out splits the island in two.</p>`;
+}
+
+function mapSVG(flow, inj, label) {
+  let g = `<path d="M60,250 C30,150 170,30 330,32 C480,18 610,110 606,222 C612,325 470,352 330,346 C190,352 78,335 60,250 Z" style="fill:var(--surface);stroke:var(--line)"/>`;
+  for (const l of LINES) {
+    const A = BUSES[l.a], B = BUSES[l.b], mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2;
+    if (l.id === G.out) {
+      g += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" style="stroke:var(--muted)" stroke-width="2" stroke-dasharray="3 5"/>
+        <text x="${mx}" y="${my - 6}" text-anchor="middle" style="fill:var(--muted)">out</text>`;
+      continue;
+    }
+    if (!flow) { g += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" style="stroke:var(--crit)" stroke-width="2"/>`; continue; }
+    const f = flow[l.id], ld = Math.abs(f) / l.cap;
+    const col = ld > 1.0001 ? "var(--crit)" : ld > 0.8 ? "var(--warn)" : "var(--muted)";
+    const wdt = 2 + 9 * Math.min(Math.abs(f) / 700, 1.3);
+    g += `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" style="stroke:${col}" stroke-width="${wdt.toFixed(1)}" stroke-linecap="round"/>`;
+    if (Math.abs(f) > 5) {
+      const dx = (B.x - A.x) * Math.sign(f), dy = (B.y - A.y) * Math.sign(f), len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+      const tx = mx + ux * 10, ty = my + uy * 10;
+      g += `<path d="M${tx},${ty} L${tx - ux * 14 - uy * 8},${ty - uy * 14 + ux * 8} L${tx - ux * 14 + uy * 8},${ty - uy * 14 - ux * 8} Z" style="fill:${col};stroke:var(--surface)" stroke-width="1.5"/>`;
+    }
+    const txt = `${Math.round(Math.abs(f))}/${l.cap}`, tw = txt.length * 6.8 + 8;
+    const ox = -(B.y - A.y) / Math.hypot(B.x - A.x, B.y - A.y) * 16, oy = (B.x - A.x) / Math.hypot(B.x - A.x, B.y - A.y) * 16;
+    g += `<rect x="${mx + ox - tw / 2}" y="${my + oy - 9}" width="${tw}" height="17" rx="3" style="fill:var(--surface);stroke:${ld > 1.0001 ? "var(--crit)" : "var(--line)"}"/>
+      <text x="${mx + ox}" y="${my + oy + 4}" text-anchor="middle" style="fill:${ld > 1.0001 ? "var(--crit)" : "var(--ink)"};font-weight:${ld > 1.0001 ? 600 : 400}">${txt}</text>`;
+  }
+  BUSES.forEach((b, i) => {
+    const v = Math.round(inj[i]), below = b.y < 150;
+    g += `<circle cx="${b.x}" cy="${b.y}" r="9" style="fill:var(--ink);stroke:var(--surface)" stroke-width="2.5"/>
+      <text x="${b.x}" y="${below ? b.y + 26 : b.y - 30}" text-anchor="middle" style="fill:var(--ink);font-family:var(--body);font-size:12px;font-weight:600">${b.name}</text>
+      <text x="${b.x}" y="${below ? b.y + 40 : b.y - 16}" text-anchor="middle" style="fill:var(--muted)">${v >= 0 ? "sends " + v : "needs " + (-v)} MW</text>`;
+  });
+  if (!flow) g += `<text x="330" y="190" text-anchor="middle" style="fill:var(--crit);font-weight:600">No routing fits the line ratings</text>`;
+  return `<svg viewBox="0 0 640 370" role="img" aria-label="${label}">${g}</svg>`;
+}
+
+/* ---------- Uncertain futures ---------- */
+const FUTS = [
+  { id: "f0", name: "As planned", hint: "Your inputs, exactly", prob: 50, oil: 0, growth: 0, sun: 0, fixed: true },
+  { id: "f1", name: "Oil price spike", hint: "Supply shock", prob: 25, oil: 60, growth: 0, sun: 0 },
+  { id: "f2", name: "Faster demand growth", hint: "EVs, new housing", prob: 15, oil: 0, growth: 12, sun: 0 },
+  { id: "f3", name: "Cloudy, calm year", hint: "Less sun and wind", prob: 10, oil: 0, growth: 0, sun: -12 }
+];
+const futIn = (f, k, dis) => `<input id="${f.id}-${k}" type="number" step="1" value="${f[k]}" ${dis ? "disabled" : ""} aria-label="${f.name} ${k}">`;
+document.getElementById("futTable").innerHTML = `<thead><tr><th scope="col">Future</th><th scope="col">Chance (%)</th><th scope="col">Oil price (± %)</th><th scope="col">Demand (± %)</th><th scope="col">Sun and wind (± %)</th></tr></thead><tbody>`
+  + FUTS.map(f => `<tr><td>${f.name}<small>${f.hint}</small></td><td>${futIn(f, "prob")}</td><td>${futIn(f, "oil", f.fixed)}</td><td>${futIn(f, "growth", f.fixed)}</td><td>${futIn(f, "sun", f.fixed)}</td></tr>`).join("") + `</tbody>`;
+document.getElementById("futRun").addEventListener("click", runFutures);
+
+function runFutures() {
+  if (!state.best) return;
+  const st = document.getElementById("futStatus");
+  st.textContent = "Testing plans in every future…";
+  document.body.classList.add("busy");
+  requestAnimationFrame(() => setTimeout(() => {
+    const t0 = performance.now(), p = state.p;
+    const futs = FUTS.map(f => {
+      const v = k => { const n = parseFloat(document.getElementById(`${f.id}-${k}`).value); return Number.isFinite(n) ? n : f[k]; };
+      return { ...f, prob: Math.max(0, v("prob")), oil: v("oil"), growth: v("growth"), sun: v("sun") };
+    });
+    const tot = futs.reduce((a, f) => a + f.prob, 0) || 1;
+    const pf = f => ({ ...p, oilPrice: p.oilPrice * (1 + f.oil / 100), growth: p.growth + f.growth, solarScale: Math.max(0, 1 + f.sun / 100), windScale: Math.max(0, 1 + 1.5 * f.sun / 100) });
+    const cands = state.ok.filter(c => c.r.cost <= state.best.r.cost * 1.25);
+    const res = cands.map(c => {
+      const rs = futs.map((f, j) => j === 0 && !f.oil && !f.growth && !f.sun ? c.r : dispatch(c.build, pf(f), { reserves: false }));
+      return { c, rs, e: rs.reduce((a, r, j) => a + futs[j].prob / tot * r.cost, 0), all: rs.every(r => r.reliable) };
+    });
+    const eng = res.find(x => key(x.c.build) === key(state.best.build));
+    const robustList = res.filter(x => x.all);
+    const robust = robustList.length ? robustList.reduce((a, b) => b.e < a.e ? b : a) : null;
+    state.fut = { futs, tot, eng, robust, n: cands.length };
+    document.body.classList.remove("busy");
+    st.textContent = `Tested ${cands.length.toLocaleString()} plans in ${futs.length} futures in ${((performance.now() - t0) / 1000).toFixed(1)} s.`;
+    renderFutures();
+  }, 20));
+}
+
+function renderFutures() {
+  const { futs, tot, eng, robust } = state.fut, out = document.getElementById("futOut");
+  if (!robust) { out.innerHTML = `<div class="hero"><span class="kicker">No robust plan</span><p>No plan within 25% of the cheapest keeps the lights on in every future. Soften the futures or keep more oil capacity.</p></div>`; return; }
+  const same = key(robust.c.build) === key(eng.c.build);
+  const shortF = eng.rs.map((r, j) => r.reliable ? null : `${futs[j].name} (${Math.round(r.unserved).toLocaleString()} MWh unserved)`).filter(Boolean);
+  const extra = robust.rs[0].cost - eng.rs[0].cost;
+  const headline = same
+    ? `Engage's cheapest plan already holds up in all ${futs.length} futures.`
+    : `The robust plan costs <em>${fmtM(extra)}/yr more</em> if things go as planned.`;
+  const body = same ? "No extra insurance is needed for these futures. Try a bigger demand jump or a lower oil fleet."
+    : shortF.length ? `That's insurance: Engage's plan can't meet load in ${shortF.join(", ")}. The robust plan keeps the lights on in every future.`
+    : `On average across the futures it costs ${fmtM(Math.abs(eng.e - robust.e))}/yr ${robust.e < eng.e ? "less" : "more"} than Engage's plan.`;
+  const outTxt = r => r.reliable ? "" : `<span class="lights">Lights out: ${Math.round(r.unserved).toLocaleString()} MWh</span>`;
+  const futLines = x => `<div class="builds" style="margin-top:0.25rem">${x.rs.map((r, j) => `<div><dt>${futs[j].name}</dt><dd>${fmtM(r.cost)}</dd><span class="d">${r.reliable ? "✓" : "<span class='lights'>short</span>"}</span></div>`).join("")}</div>`;
+  out.innerHTML = `
+    <section class="hero"><span class="kicker">The answer · plan for several futures</span>
+      <p class="hero-cost"><span class="n" style="font-size:clamp(1.5rem,3.5vw,2.1rem);line-height:1.2">${headline}</span></p>
+      <p>${body}</p>
+      <div class="kpis"><div class="kpi"><b>${fmtM(eng.e)}</b><span>Engage's plan, average cost</span></div><div class="kpi"><b>${fmtM(robust.e)}</b><span>Robust plan, average cost</span></div></div>
+    </section>
+    <div class="pair">
+      ${cardHTML({ c: eng.c, mark: "E", title: "Engage's answer", why: "Cheapest if everything goes exactly as planned.", }, { extra: futLines(eng) })}
+      ${same ? "" : cardHTML({ c: robust.c, mark: "R", title: "Robust plan", why: "Cheapest on average that keeps the lights on in every future." }, { extra: futLines(robust) })}
+    </div>
+    <section class="panel"><header><h2>Annual cost in each future</h2><p class="sub">Bars start at zero. A red label means the plan can't meet load in that future.</p></header>
+      <div class="legend-row"><span><i class="sw" style="background:var(--muted)"></i>Engage's answer</span>${same ? "" : `<span><i class="sw" style="background:var(--accent)"></i>Robust plan</span>`}</div>
+      <div class="bars">${barsSVG(futs, tot, eng, same ? null : robust)}</div></section>`;
+  if (TAB.tab === "grid") renderGrid();
+}
+
+function barsSVG(futs, tot, eng, rob) {
+  const W = 720, H = 300, L = 64, R = 10, T = 30, B = 54;
+  const all = futs.flatMap((f, j) => [eng.rs[j].cost, rob ? rob.rs[j].cost : 0]);
+  const ymax = Math.ceil(Math.max(...all) / 1e6 / 250) * 250;
+  const Y = v => T + (H - T - B) * (1 - v / 1e6 / ymax);
+  const gw = (W - L - R) / futs.length, bw = rob ? Math.min(46, gw / 3) : Math.min(60, gw / 2.2);
+  let g = "";
+  for (let v = 0; v <= ymax; v += 250) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v * 1e6)}" y2="${Y(v * 1e6)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y(v * 1e6) + 4}" text-anchor="end">$${v.toLocaleString()}M</text>`;
+  futs.forEach((f, j) => {
+    const cx = L + gw * j + gw / 2;
+    const bars = rob ? [[eng.rs[j], "var(--muted)", cx - bw / 2 - 2], [rob.rs[j], "var(--accent)", cx + bw / 2 + 2]] : [[eng.rs[j], "var(--muted)", cx]];
+    for (const [r, col, x] of bars) {
+      g += `<path d="M${x - bw / 2},${Y(0)} V${Y(r.cost) + 4} Q${x - bw / 2},${Y(r.cost)} ${x - bw / 2 + 4},${Y(r.cost)} H${x + bw / 2 - 4} Q${x + bw / 2},${Y(r.cost)} ${x + bw / 2},${Y(r.cost) + 4} V${Y(0)} Z" style="fill:${col}"/>`;
+      g += `<text x="${x}" y="${Y(r.cost) - 6}" text-anchor="middle" style="fill:${r.reliable ? "var(--ink)" : "var(--crit)"};font-weight:${r.reliable ? 400 : 600}">${r.reliable ? fmtM(r.cost) : "short!"}</text>`;
+    }
+    g += `<text x="${cx}" y="${H - B + 18}" text-anchor="middle" style="fill:var(--ink);font-family:var(--body);font-size:12px">${f.name}</text>
+      <text x="${cx}" y="${H - B + 34}" text-anchor="middle">${Math.round(f.prob / tot * 100)}% chance</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Annual cost of each plan in each future">${g}</svg>`;
+}
+
+run();
+</script>
+
+</body></html>

@@ -1,0 +1,1376 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Engage Reliability Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@500;700&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Engage-style app shell (top bar + tabs), then a parameters rail beside a results column. */
+:root {
+  --bg: #f3f4f6; --surface: #ffffff; --sunk: #eceef1;
+  --ink: #1b2230; --muted: #5a6274; --line: #d9dce3;
+  --accent: #b86e00; --accent-ink: #8a5200; --accent-soft: #fbefd9;
+  --good: #1f7a4d; --good-bg: #e2f3ea; --warn: #8a6a00; --warn-bg: #f8eecb; --crit: #c23b3a; --crit-bg: #fbe4e3;
+  --s-firm: #4a3aa7; --s-oil: #eb6834; --s-wind: #2a78d6; --s-solar: #eda100; --s-batt: #1baf7a;
+  --seq-0: #e6f4f1; --seq-1: #a9dcd2; --seq-2: #5fbcab; --seq-3: #1f8f7c; --seq-4: #0b5d50;
+  --display: "Saira Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151c; --surface: #1a1f29; --sunk: #222834; --ink: #e6e9ef; --muted: #9aa2b3; --line: #2e3544;
+    --accent: #f0a53a; --accent-ink: #f6c27a; --accent-soft: #3a2c14;
+    --good: #6fd3a0; --good-bg: #173326; --warn: #e6c45a; --warn-bg: #362d12; --crit: #f08a89; --crit-bg: #3b1d1d;
+    --s-firm: #9085e9; --s-oil: #d95926; --s-wind: #3987e5; --s-solar: #c98500; --s-batt: #199e70;
+    --seq-0: #173a35; --seq-1: #1d5a50; --seq-2: #2b8273; --seq-3: #4fb3a0; --seq-4: #9be0d2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151c; --surface: #1a1f29; --sunk: #222834; --ink: #e6e9ef; --muted: #9aa2b3; --line: #2e3544;
+  --accent: #f0a53a; --accent-ink: #f6c27a; --accent-soft: #3a2c14;
+  --good: #6fd3a0; --good-bg: #173326; --warn: #e6c45a; --warn-bg: #362d12; --crit: #f08a89; --crit-bg: #3b1d1d;
+  --s-firm: #9085e9; --s-oil: #d95926; --s-wind: #3987e5; --s-solar: #c98500; --s-batt: #199e70;
+  --seq-0: #173a35; --seq-1: #1d5a50; --seq-2: #2b8273; --seq-3: #4fb3a0; --seq-4: #9be0d2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 0.9375rem/1.55 var(--body); }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
+p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* app shell */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding-inline: 16px; }
+.topbar-in { max-width: 82rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; padding-block: 0.7rem; }
+.brand { font: 700 1.15rem/1 var(--display); letter-spacing: 0.02em; }
+.brand span { color: var(--muted); font-weight: 500; }
+.crumbs { color: var(--muted); font-size: 0.875rem; min-width: 0; }
+.crumbs b { color: var(--ink); font-weight: 600; }
+.dummy { margin-left: auto; font: 500 0.7rem/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); background: var(--warn-bg); padding: 0.4rem 0.6rem; border-radius: 4px; }
+.tabs { max-width: 82rem; margin: 0 auto; display: flex; gap: 0.25rem; overflow-x: auto; }
+.tab { padding: 0.6rem 0.9rem; border: 0; background: none; border-bottom: 2px solid transparent; color: var(--muted); white-space: nowrap; cursor: not-allowed; }
+.tab.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; cursor: default; }
+.tab .new { font: 500 0.65rem/1 var(--mono); letter-spacing: 0.08em; color: var(--accent-ink); background: var(--accent-soft); padding: 0.2rem 0.35rem; border-radius: 3px; margin-left: 0.35rem; vertical-align: 1px; }
+
+.page { max-width: 82rem; margin: 0 auto; padding-inline: 16px; padding-block: 1.5rem 3rem; display: grid; gap: 1.5rem; }
+.question { display: grid; gap: 0.5rem; }
+.question .eyebrow { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+.question h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); }
+.question p { color: var(--muted); max-width: 70ch; }
+.layout { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* parameters rail */
+.rail { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1rem; display: grid; gap: 1.1rem; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); }
+@media (max-width: 900px) { .rail { position: static; } }
+.rail h2 { font-size: 1.1rem; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+legend { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.55rem; padding: 0; }
+fieldset.addon legend { color: var(--accent-ink); }
+fieldset.addon { background: var(--accent-soft); margin-inline: -0.5rem; padding: 0.75rem 0.5rem; border-radius: 6px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) 7.75rem; align-items: center; gap: 0.5rem; }
+.field label { font-size: 0.875rem; }
+.field label small { display: block; color: var(--muted); font-size: 0.75rem; }
+.inp { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
+.inp:focus-within { border-color: var(--accent); }
+.inp input { width: 100%; min-width: 0; border: 0; background: none; padding: 0.35rem 0.4rem; text-align: right; font-variant-numeric: tabular-nums; outline: none; }
+.inp span { font: 400 0.72rem/1 var(--mono); color: var(--muted); padding-right: 0.45rem; white-space: nowrap; }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 0.5rem 0.9rem; border-radius: 6px; cursor: pointer; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
+.btn:hover { border-color: var(--accent); }
+.status { font-size: 0.8125rem; color: var(--muted); min-height: 1.2em; }
+
+/* results */
+.results { display: grid; gap: 1.25rem; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.1rem; display: grid; gap: 0.9rem; min-width: 0; }
+.panel h2 { font-size: 1.2rem; }
+.panel .sub { color: var(--muted); font-size: 0.875rem; max-width: 75ch; }
+.answer { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 1.1rem; display: grid; gap: 0.6rem; }
+.answer .k { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); }
+.answer .big { font: 700 clamp(1.25rem, 3vw, 1.6rem)/1.25 var(--display); }
+.answer .big em { font-style: normal; color: var(--accent-ink); }
+.answer p { color: var(--ink); max-width: 75ch; }
+.chip { display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.75rem/1 var(--mono); padding: 0.32rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.crit { color: var(--crit); background: var(--crit-bg); }
+.chip.good::before { content: "✓"; }
+.chip.warn::before { content: "~"; }
+.chip.crit::before { content: "!"; font-weight: 700; }
+
+.tscroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+th, td { text-align: right; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font: 500 0.7rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); vertical-align: bottom; white-space: normal; }
+thead th.us { color: var(--accent-ink); }
+td.us { background: var(--accent-soft); font-weight: 600; }
+tbody tr:last-child td { border-bottom: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; flex-wrap: wrap; }
+.seg button { border: 0; background: var(--surface); padding: 0.4rem 0.7rem; cursor: pointer; font-size: 0.8125rem; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
+.legend-row { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.8125rem; color: var(--muted); }
+.legend-row span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sw { width: 0.8rem; height: 0.8rem; border-radius: 2px; display: inline-block; }
+.sw.line { height: 2px; border-radius: 0; background: var(--ink); }
+.sw.dash { height: 0; border-top: 2px dashed var(--ink); border-radius: 0; }
+.chart { position: relative; overflow-x: auto; }
+.chart svg { display: block; width: 100%; min-width: 36rem; height: auto; }
+.chart text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 0.55rem 0.7rem; font-size: 0.8rem; box-shadow: 0 4px 16px rgb(0 0 0 / 0.12); min-width: 12rem; z-index: 2; }
+.tip b { font-family: var(--display); font-size: 0.95rem; }
+.tip div { display: flex; justify-content: space-between; gap: 1rem; font-variant-numeric: tabular-nums; }
+.tip i { display: inline-flex; align-items: center; gap: 0.35rem; font-style: normal; color: var(--muted); }
+.linkbtn { border: 0; background: none; color: var(--accent-ink); text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.8125rem; }
+
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.steps div { border-top: 2px solid var(--accent); padding-top: 0.6rem; display: grid; gap: 0.3rem; align-content: start; }
+.steps b { font-family: var(--display); font-size: 1.05rem; }
+.steps p { font-size: 0.875rem; color: var(--muted); }
+.steps code, .panel code { font-family: var(--mono); font-size: 0.82em; background: var(--sunk); padding: 0.05em 0.3em; border-radius: 3px; }
+.note { font-size: 0.8125rem; color: var(--muted); max-width: 90ch; }
+.busy .results { opacity: 0.55; transition: opacity 0.15s; }
+@media (prefers-reduced-motion: reduce) { .busy .results { transition: none; } }
+</style>
+<style>
+/* pathway roadmap */
+[hidden] { display: none !important; }
+table.wrap td, table.wrap th { white-space: normal; }
+.roadmap { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 0.6rem; align-items: stretch; }
+.roadmap .arrow { align-self: center; font: 700 1.4rem/1 var(--display); color: var(--muted); }
+@media (max-width: 760px) { .roadmap { grid-template-columns: minmax(0, 1fr); } .roadmap .arrow { transform: rotate(90deg); justify-self: center; } }
+.milestone { background: var(--sunk); border-radius: 10px; padding: 0.9rem; display: grid; gap: 0.6rem; align-content: start; }
+.milestone header { display: flex; align-items: baseline; gap: 0.5rem; }
+.milestone .yr { font: 700 1.6rem/1 var(--display); }
+.milestone .span { font: 400 0.72rem/1 var(--mono); color: var(--muted); }
+.adds { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; font-size: 0.875rem; }
+.adds li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.45rem; align-items: center; }
+.adds b { font-variant-numeric: tabular-nums; }
+.milestone .ret { font-size: 0.8125rem; color: var(--muted); display: flex; gap: 0.45rem; align-items: center; }
+.re-meter { display: grid; gap: 0.35rem; }
+.re-meter .track { position: relative; height: 10px; background: var(--surface); border-radius: 5px; }
+.re-meter .track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--good); border-radius: 5px; }
+.re-meter .track b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+.re-lab { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.8125rem; }
+.milestone .cost { font-size: 0.8125rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 0.5rem; }
+.milestone .cost b { color: var(--ink); font-size: 0.95rem; }
+</style>
+<style>
+/* answer box: a hero, not a sentence */
+.answer { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 10px; padding: 1.4rem; gap: 1.2rem; }
+:root { --good-cell: #cfe9da; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --good-cell: #24493a; } }
+:root[data-theme="dark"] { --good-cell: #24493a; }
+.hero-top { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; align-items: end; }
+.hero-cost .n { font: 700 clamp(2.4rem, 6vw, 3.4rem)/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hero-cost .n small { font-size: 0.45em; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.kpis { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; }
+.kpi { display: grid; gap: 0.1rem; }
+.kpi b { font: 700 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 0.8125rem; color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
+@media (max-width: 700px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--sunk); border-radius: 8px; padding: 0.8rem 0.9rem; display: grid; gap: 0.4rem; align-content: start; }
+.tile .nm { font-size: 0.8125rem; color: var(--muted); }
+.tile .mw { font: 700 1.6rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.tile .mw small { font-size: 0.55em; font-weight: 500; color: var(--muted); }
+.meter2 { position: relative; height: 12px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.meter2 i { position: absolute; left: 0; display: block; border-radius: 3px; }
+.meter2 .us { top: 0; height: 7px; background: var(--accent); }
+.meter2 .them { bottom: 0; height: 3px; background: var(--muted); opacity: 0.7; }
+.delta { font: 400 0.72rem/1.2 var(--mono); color: var(--muted); }
+.delta.ch { color: var(--ink); font-weight: 500; }
+.tile-key { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; font-size: 0.78rem; color: var(--muted); }
+.tile-key span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.sw.ghost { height: 3px; background: var(--muted); }
+.mixwrap, .why { display: grid; gap: 0.5rem; }
+.mixwrap h3, .why h3 { font: 600 0.9375rem/1.35 var(--body); }
+.mix { display: flex; height: 1.6rem; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--surface); }
+.mix i { display: block; height: 100%; min-width: 2px; }
+.mixlab { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; font-size: 0.8125rem; color: var(--muted); }
+.mixlab span { display: inline-flex; gap: 0.4rem; align-items: center; }
+.mixlab b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.why { border-top: 1px solid var(--line); padding-top: 1rem; }
+.hourmaps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+@media (max-width: 760px) { .hourmaps { grid-template-columns: minmax(0, 1fr); } }
+.hm { margin: 0; display: grid; gap: 3px; min-width: 0; }
+.hm figcaption { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.3rem; }
+.hm figcaption b { font-family: var(--display); font-size: 1.05rem; }
+.hm-row { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: 0.5rem; align-items: center; }
+.hm-day { font-size: 0.75rem; line-height: 1.15; }
+.hm-day small { display: block; color: var(--muted); font-family: var(--mono); font-size: 0.65rem; }
+.hm-cells { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 2px; }
+.hm-cells i { display: block; height: 1.15rem; border-radius: 2px; background: var(--good-cell); }
+.hm-cells i.bad { background: var(--crit); }
+.hm-note { font-size: 0.8125rem; color: var(--ink); margin-top: 0.35rem; }
+.hm-axis { display: flex; justify-content: space-between; font: 400 0.65rem/1 var(--mono); color: var(--muted); }
+</style>
+<style>
+.kicker { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); }
+.panel > header { display: grid; gap: 0.35rem; }
+.subtabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+.subtabs button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 0.7rem 0.9rem; cursor: pointer; display: grid; gap: 0.15rem; }
+.subtabs button b { font: 700 1.05rem/1.1 var(--display); }
+.subtabs button span { font-size: 0.8125rem; color: var(--muted); }
+.subtabs button[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); background: var(--accent-soft); }
+@media (max-width: 760px) { .subtabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tabpanel { display: grid; gap: 1.25rem; min-width: 0; }
+.feature-intro { border-top: 4px solid var(--accent); }
+.ctl { display: grid; gap: 0.3rem; font-size: 0.8125rem; color: var(--muted); }
+.fine { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--muted); }
+.statrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+@media (max-width: 800px) { .statrow { grid-template-columns: minmax(0, 1fr); } }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; display: grid; gap: 0.4rem; align-content: start; }
+.stat .who { font: 500 0.7rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.stat .n { font: 700 1.6rem/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.stat p { font-size: 0.875rem; color: var(--muted); }
+.stat.bad { border-color: var(--crit); }
+.stat.okk { border-color: var(--good); }
+.stat.hl { border-color: var(--accent); background: var(--accent-soft); }
+.futs input[type=number] { width: 5.5rem; border: 1px solid var(--line); border-radius: 5px; padding: 0.3rem 0.4rem; text-align: right; background: var(--surface); font-variant-numeric: tabular-nums; }
+.futs td:first-child { white-space: normal; }
+.futs td small { display: block; color: var(--muted); font-size: 0.75rem; }
+.check { display: flex; gap: 0.5rem; align-items: center; font-size: 0.875rem; }
+.check input { accent-color: var(--accent); width: 1rem; height: 1rem; }
+.bar-in { display: inline-block; width: 5rem; height: 0.5rem; background: var(--sunk); border-radius: 3px; vertical-align: middle; margin-right: 0.4rem; overflow: hidden; }
+.bar-in i { display: block; height: 100%; background: var(--s-oil); }
+.steps-list { display: grid; gap: 0.5rem; margin: 0; padding-left: 1.2rem; }
+details.about { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1.1rem; }
+details.about summary { cursor: pointer; font: 700 1.05rem/1.2 var(--display); }
+details.about[open] summary { margin-bottom: 0.9rem; }
+.chip.plain { color: var(--muted); background: var(--sunk); }
+.sw.dot { border-radius: 50%; }
+</style>
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand">Engage <span>· HSEO</span></span>
+    <span class="crumbs">Models / <b>Sample island 2035</b> / Scenario: base</span>
+    <span class="dummy">Prototype · dummy data</span>
+  </div>
+  <nav class="tabs" aria-label="Model sections">
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Model</button>
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Scenarios</button>
+    <button class="tab" type="button" aria-disabled="true" title="Not part of this prototype">Runs</button>
+    <button class="tab on" type="button" aria-current="page">Reliability<span class="new">ADD-ON · GRIDPATH</span></button>
+  </nav>
+</header>
+
+<main class="page">
+  <section class="question">
+    <span class="eyebrow">Planning question</span>
+    <h1>What is the cheapest way to meet the island's electricity needs?</h1>
+    <p>Engage finds the cheapest plan that balances energy every hour. An island grid also has to hold spinning reserve for a sudden loss of a unit or a cloud over the solar, and oil units that are on can't run below their minimum. This add-on brings four GridPath features to that question: operating reserves, capacity credit, planning several periods at once, and deciding which old plants to retire.</p>
+  </section>
+
+  <div class="layout">
+    <aside class="rail" id="rail" aria-label="Scenario parameters"></aside>
+
+    <div class="results">
+      <nav class="subtabs" role="tablist" aria-label="GridPath add-on features">
+        <button role="tab" type="button" id="t-res" aria-controls="tab-res" data-tab="res"><b>Reserves</b><span>Can the grid be operated?</span></button>
+        <button role="tab" type="button" id="t-elcc" aria-controls="tab-elcc" data-tab="elcc"><b>Capacity credit</b><span>Enough for the tightest hour?</span></button>
+        <button role="tab" type="button" id="t-path" aria-controls="tab-path" data-tab="path"><b>Pathway to 2045</b><span>What to build, and when?</span></button>
+        <button role="tab" type="button" id="t-ret" aria-controls="tab-ret" data-tab="ret"><b>Retirements</b><span>Which oil units to keep?</span></button>
+      </nav>
+
+      <div class="tabpanel" id="tab-res" role="tabpanel" aria-labelledby="t-res">
+      <section class="answer" aria-live="polite" id="answer"></section>
+
+      <section class="panel" aria-labelledby="cmp-h">
+        <h2 id="cmp-h">Engage's answer compared with the add-on's</h2>
+        <p class="sub">The middle column takes Engage's plan exactly as built and runs it under the operating rules. That's where hidden problems show up.</p>
+        <div class="tscroll"><table id="cmp"></table></div>
+      </section>
+
+      <section class="panel" aria-labelledby="disp-h">
+        <h2 id="disp-h">Hour by hour on a representative day</h2>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Plan" id="planSeg"></div>
+          <div class="seg" role="group" aria-label="Day" id="daySeg"></div>
+        </div>
+        <div class="legend-row" id="legend"></div>
+        <div class="chart" id="chart"></div>
+        <p class="note" id="chartNote"></p>
+        <div><button class="linkbtn" type="button" id="tableToggle" aria-expanded="false">Show this day as a table</button></div>
+        <div class="tscroll" id="dayTable" hidden></div>
+      </section>
+
+      </div>
+
+      <div class="tabpanel" id="tab-elcc" role="tabpanel" aria-labelledby="t-elcc" hidden>
+        <section class="panel feature-intro">
+          <span class="kicker">GridPath feature · resource adequacy with ELCC</span>
+          <h2>Does the plan have enough capacity for the tightest hour?</h2>
+          <p class="sub">Engage's reserve margin counts every megawatt the same, so 1 MW of solar counts as 1 MW even at 7 pm when the sun is down. GridPath gives each resource a capacity credit (its effective load-carrying capability, or ELCC): how much it actually reduces the firm capacity the island needs in its tightest hour. Credits shrink as more of the same resource is added, and solar and batteries are worth more together than apart.</p>
+          <div class="controls">
+            <div class="ctl"><span>Plan</span><div class="seg" role="group" aria-label="Plan to check" id="ePlan"></div></div>
+            <label class="fine" for="prm">Planning reserve margin <span class="inp" style="width:6rem"><input id="prm" type="number" step="1" value="15"><span>%</span></span></label>
+          </div>
+        </section>
+        <section class="statrow" id="eStats" aria-live="polite"></section>
+        <section class="panel" aria-labelledby="ecr-h">
+          <header><h2 id="ecr-h">What each resource counts for</h2><p class="sub" id="eBind"></p></header>
+          <div class="tscroll"><table id="eTable"></table></div>
+        </section>
+        <section class="panel" aria-labelledby="ecv-h">
+          <header><h2 id="ecv-h">Each extra 100 MW of battery: how much counts as firm?</h2><p class="sub">Battery credit falls as more is added, because the tightest hours get longer and there's less spare energy to recharge. More solar keeps battery credit higher for longer, because it supplies the charging energy.</p></header>
+          <div class="legend-row" id="eLegend"></div>
+          <div class="chart" id="eChart"></div>
+        </section>
+      </div>
+
+      <div class="tabpanel" id="tab-path" role="tabpanel" aria-labelledby="t-path" hidden>
+        <section class="panel feature-intro">
+          <span class="kicker">GridPath feature · multiple investment periods</span>
+          <h2>What should be built, and when, to reach 100% by 2045?</h2>
+          <p class="sub">Engage optimizes one year per run. To plan a path you'd run 2030, carry its capacity into a 2040 run by hand, then do the same for 2045. GridPath plans every period in one run. What it builds in 2030 is chosen knowing what 2045 will need, and each period's capacity carries forward automatically.</p>
+          <div class="tscroll"><table class="futs" id="perTable"></table></div>
+          <label class="check" for="bioRE"><input type="checkbox" id="bioRE" checked> Count biodiesel as renewable, as Hawai‘i's renewable portfolio standard does</label>
+          <div class="actions"><button class="btn primary" type="button" id="pathRun">Plan the pathway</button><span class="status" id="pathStatus" role="status"></span></div>
+        </section>
+        <div id="pathOut" class="tabpanel" aria-live="polite"></div>
+      </div>
+
+      <div class="tabpanel" id="tab-ret" role="tabpanel" aria-labelledby="t-ret" hidden>
+        <section class="panel feature-intro">
+          <span class="kicker">GridPath feature · economic retirement</span>
+          <h2>Which oil units are worth keeping?</h2>
+          <p class="sub">In Engage, existing plants are a fixed input: you decide what stays. GridPath can make retirement a decision. For each unit it weighs the cost of keeping it running (staff, maintenance, fuel at its efficiency) against what it would cost to replace what it does. These seven units are dummy examples, not real plants.</p>
+          <div class="tscroll"><table class="futs" id="unitIn"></table></div>
+          <div class="actions"><button class="btn primary" type="button" id="retRun">Decide retirements</button><span class="status" id="retStatus" role="status"></span></div>
+        </section>
+        <div id="retOut" class="tabpanel" aria-live="polite"></div>
+      </div>
+
+      <details class="about">
+        <summary>How this attaches to Engage</summary>
+        <div class="steps">
+          <div><b>1 · Read the Engage model</b><p>A new Django app, <code>reliability</code>, reads the run's locations, technologies, timeseries and scenario parameters from Engage's Postgres database. Nothing in Engage's own tables changes.</p></div>
+          <div><b>2 · Solve with GridPath</b><p>It writes GridPath's input CSVs, adds the settings from these tabs (reserves, reserve margin and capacity credits, periods, unit-level plant data), and solves on the Celery worker Engage already uses for Calliope, with the open-source HiGHS solver.</p></div>
+          <div><b>3 · Show it on the run</b><p>The results come back as this tab on the run, side by side with Engage's own result.</p></div>
+        </div>
+        <p class="note" style="margin-top:0.9rem">In this prototype, simplified calculations in your browser stand in for GridPath: a grid search over build sizes, five representative days, a peak-hour capacity-credit method, a step-by-step search for the pathway, and a one-unit-at-a-time retirement search. The real add-on solves each as one GridPath optimization over every hour of the year.</p>
+      </details>
+    </div>
+  </div>
+</main>
+<script>
+// Island least-cost model. Dummy data: an O‘ahu-sized island, not real utility figures.
+// Five representative days, weighted to a 365-day year, hourly. Capacity is chosen by
+// exhaustive grid search; each candidate is dispatched with simple merit-order rules.
+const DAYS = [
+  { id: "winter", name: "Winter day",  w: 88, sun: 0.78, wind: 0.32, load: 0.95 },
+  { id: "spring", name: "Spring day",  w: 88, sun: 0.95, wind: 0.40, load: 0.97 },
+  { id: "summer", name: "Summer day",  w: 89, sun: 1.00, wind: 0.48, load: 1.05 },
+  { id: "fall",   name: "Fall day",    w: 90, sun: 0.88, wind: 0.36, load: 1.02 },
+  { id: "kona",   name: "Kona storm",  w: 10, sun: 0.25, wind: 0.07, load: 1.00 }
+];
+const LOAD_SHAPE = [0.66,0.63,0.62,0.62,0.64,0.70,0.78,0.80,0.78,0.76,0.75,0.75,
+                    0.76,0.77,0.78,0.80,0.86,0.94,1.00,0.99,0.94,0.86,0.78,0.71];
+const PEAK_MW = 1150;
+const BATT_HOURS = 4, ETA = Math.sqrt(0.85);
+const HEAT_RATE = 10.5;      // MMBtu/MWh, oil fleet average
+const MMBTU_PER_BBL = 6.3;
+const OIL_VOM = 8;           // $/MWh
+const BIO_HEAT_RATE = 9.5;   // MMBtu/MWh, new combustion turbines on biodiesel
+
+function solarCF(d, h) {
+  const t = h + 0.5;
+  if (t <= 6.5 || t >= 18.5) return 0;
+  return 0.82 * Math.pow(Math.sin(Math.PI * (t - 6.5) / 12), 1.2) * d.sun;
+}
+function windCF(d, h) {
+  return Math.max(0, d.wind + 0.08 * Math.sin(2 * Math.PI * (h - 9) / 24) * (d.wind / 0.4));
+}
+// Fuel cost for one hour when the oil fleet is modeled unit by unit: cheapest heat rate runs first.
+function meritFuel(units, gen, p) {
+  const price = p.oilPrice / MMBTU_PER_BBL;
+  let left = gen, cost = 0;
+  for (const u of units) {
+    if (!u.keep || left <= 0) continue;
+    const g = Math.min(left, u.mw);
+    cost += g * (u.hr * price + OIL_VOM);
+    left -= g;
+  }
+  return cost + left * (10.5 * price + OIL_VOM);
+}
+function crf(r, n) { return r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1); }
+
+// Annualized $ per MW-year for each build option
+function annualCosts(p) {
+  const r = p.discount / 100;
+  return {
+    solar: 1000 * (p.solarCapex * crf(r, 25) + 25),
+    wind: 1000 * (p.windCapex * crf(r, 25) + 50),
+    batt: 1000 * (p.battCapex * crf(r, 15) + 30),
+    firm: 1000 * (p.firmCapex * crf(r, 30) + 20)
+  };
+}
+
+// Dispatch one candidate build. ops.reserves=false is how Engage sees the island today
+// (energy balance only, oil can run at any level). ops.reserves=true adds GridPath-style
+// spinning reserve that committed oil units or batteries must hold, and oil units that
+// are online can't run below their minimum stable level.
+// Batteries shave peaks: they discharge only above a threshold T, set per day to the
+// lowest level at which the battery never runs dry when it is called on.
+function simDay(d, build, p, ops, soc0, T, keep) {
+  const P = build.batt, E = build.batt * BATT_HOURS, res = ops.reserves;
+  const scale = PEAK_MW * (1 + p.growth / 100);
+  const day = { peakFirm: 0, oilFuel: 0, load: 0, oil: 0, firm: 0, solar: 0, wind: 0, unserved: 0, shortMWh: 0, shortHours: 0, curtail: 0, ren: 0, starved: false };
+  const rows = keep ? [] : null;
+  let soc = soc0;
+  for (let h = 0; h < 24; h++) {
+    const load = scale * LOAD_SHAPE[h] * d.load;
+    const sol = build.solar * solarCF(d, h) * (p.solarScale ?? 1), wnd = build.wind * windCF(d, h) * (p.windScale ?? 1);
+    const ren = sol + wnd, net = load - ren;
+    const R = res ? (p.resLoad / 100) * load + (p.resSolar / 100) * sol : 0;
+    let dis = 0, ch = 0;
+    if (net > T) {
+      const want = Math.min(P, net - T);
+      dis = Math.min(want, soc * ETA);
+      if (dis < want - 1e-6) day.starved = true;
+    } else if (net < 0) ch = Math.min(P, (E - soc) / ETA, -net);
+    soc += ch * ETA - dis / ETA;
+    let curtail = net < 0 ? -net - ch : 0;
+    const battRes = res ? Math.max(0, Math.min(P - dis + ch, soc * ETA)) : 0;
+    const G0 = Math.max(0, net - dis);
+    const Rth = Math.max(0, R - battRes);
+    const cap = p.oilCap + build.firm;
+    const gen0 = Math.min(G0, cap);
+    const unserved = G0 - gen0;
+    const C = Math.min(cap, G0 + Rth);
+    const short = Math.max(0, Rth - (C - gen0));
+    // existing oil runs first, new turbines after (unless biodiesel turbines are run first to meet a renewable target)
+    let gen = p.bioFirst ? Math.max(0, gen0 - build.firm) : Math.min(gen0, p.oilCap);
+    const firmGen = gen0 - gen;
+    if (res) {
+      const minGen = (p.minLoad / 100) * Math.min(C, p.oilCap);
+      if (gen < minGen) {                     // forced-on oil pushes out renewables or charges batteries
+        let extra = minGen - gen;
+        gen = minGen;
+        const absorb = Math.max(0, Math.min(extra, P - ch, (E - soc) / ETA));
+        soc += absorb * ETA; ch += absorb; extra -= absorb;
+        curtail += extra;
+      }
+    }
+    day.peakFirm = Math.max(day.peakFirm, gen + firmGen + unserved);
+    if (p.units) day.oilFuel += meritFuel(p.units, gen, p);
+    day.load += load; day.oil += gen; day.firm += firmGen; day.unserved += unserved; day.curtail += curtail;
+    const kept = ren > 0 ? 1 - curtail / ren : 0;
+    day.solar += sol * kept; day.wind += wnd * kept;
+    day.ren += ren - curtail; day.shortMWh += short; if (short > 0.5) day.shortHours++;
+    if (keep) {
+      const k = ren > 0 ? 1 - curtail / ren : 0;
+      rows.push({ h, load, oil: gen, firm: firmGen, wind: wnd * k, solar: sol * k, batt: dis, charge: ch, curtail, reserve: R, unserved, short, soc });
+    }
+  }
+  day.soc = soc; day.rows = rows;
+  return day;
+}
+function threshold(d, build, p, ops, soc0) {
+  if (build.batt === 0) return 0;
+  if (!simDay(d, build, p, ops, soc0, 0, false).starved) return 0;
+  let lo = 0, hi = PEAK_MW * 1.6;
+  for (let i = 0; i < 9; i++) {
+    const mid = (lo + hi) / 2;
+    if (simDay(d, build, p, ops, soc0, mid, false).starved) lo = mid; else hi = mid;
+  }
+  return hi;
+}
+function dispatch(build, p, ops, keepHours) {
+  const fuel = p.oilPrice / MMBTU_PER_BBL * HEAT_RATE + OIL_VOM;
+  const t = { oilFuel: 0, load: 0, oil: 0, firm: 0, solar: 0, wind: 0, unserved: 0, shortMWh: 0, shortHours: 0, curtail: 0, ren: 0 };
+  const hours = keepHours ? {} : null;
+  let peak = 0;
+  for (const d of DAYS) {
+    let soc = build.batt * BATT_HOURS * 0.5, day;
+    for (let pass = 0; pass < 2; pass++) {   // second pass starts from the first pass's end state
+      const T = threshold(d, build, p, ops, soc);
+      day = simDay(d, build, p, ops, soc, T, keepHours && pass === 1);
+      if (pass === 0) soc = day.soc;
+    }
+    for (const k in t) t[k] += day[k] * d.w;
+    peak = Math.max(peak, day.peakFirm);
+    if (keepHours) hours[d.id] = day.rows;
+  }
+  t.peakFirm = peak;
+  const ac = annualCosts(p);
+  t.fuelCost = (p.units ? t.oilFuel : t.oil * fuel) + t.firm * (p.bioPrice * BIO_HEAT_RATE + OIL_VOM);
+  t.capital = build.solar * ac.solar + build.wind * ac.wind + build.batt * ac.batt + build.firm * ac.firm;
+  t.fixedOil = p.units ? p.units.reduce((s, u) => s + (u.keep ? u.mw * u.fom * 1000 : 0), 0) : 0;
+  t.capital += t.fixedOil;
+  t.cost = t.capital + t.fuelCost;
+  t.reShare = 1 - (t.oil + t.firm + t.unserved) / t.load;
+  t.reShareBio = 1 - (t.oil + t.unserved) / t.load;   // Hawai‘i's RPS counts biofuels as renewable
+  t.perMWh = t.cost / t.load;
+  t.reliable = t.unserved < 1 && (!ops.reserves || t.shortMWh < 1);
+  t.hours = hours;
+  return t;
+}
+
+const GRID = { solar: [], wind: [], batt: [], firm: [] };
+for (let s = 0; s <= 3000; s += 200) GRID.solar.push(s);
+for (let w = 0; w <= 300; w += 100) GRID.wind.push(w);
+for (let f = 0; f <= 400; f += 100) GRID.firm.push(f);
+for (let b = 0; b <= 2000; b += 100) GRID.batt.push(b);
+
+// Every candidate build, dispatched. Returned so callers can search or explore the space.
+function evaluateAll(p, ops, grid) {
+  const G = grid || GRID, out = [];
+  for (const solar of G.solar) for (const wind of G.wind) for (const batt of G.batt) for (const firm of G.firm) {
+    const b = { solar, wind, batt, firm };
+    const r = dispatch(b, p, ops, false);
+    out.push({ build: b, r });
+  }
+  return out;
+}
+function cheapest(list, minRE) {
+  let best = null;
+  for (const c of list) {
+    if (!c.r.reliable || c.r.reShare + 1e-9 < minRE / 100) continue;
+    if (!best || c.r.cost < best.r.cost) best = c;
+  }
+  return best;
+}
+if (typeof module !== "undefined") module.exports = { DAYS, dispatch, evaluateAll, cheapest, GRID };
+// Capacity credit (ELCC-style): how much firm, dispatchable capacity the island still needs
+// in its tightest hour once solar, wind and batteries do what they can. Batteries may charge
+// from any spare generation before the peak, as in standard capacity accounting.
+function netLoads(build, p, d) {
+  const scale = PEAK_MW * (1 + p.growth / 100), out = [];
+  for (let h = 0; h < 24; h++) {
+    const load = scale * LOAD_SHAPE[h] * d.load;
+    out.push(load - build.solar * solarCF(d, h) * (p.solarScale ?? 1) - build.wind * windCF(d, h) * (p.windScale ?? 1));
+  }
+  return out;
+}
+function firmNeedDay(net, P, E) {
+  const top = Math.max(...net);
+  if (P <= 0) return Math.max(0, top);
+  const ok = L => {
+    let dis = 0, chg = 0;
+    for (const n of net) {
+      if (n - L > P) return false;
+      if (n > L) dis += n - L; else chg += Math.min(P, L - n);
+    }
+    return dis <= Math.min(E * ETA, chg * ETA * ETA);
+  };
+  let lo = Math.max(0, top - P), hi = Math.max(0, top);
+  if (ok(lo)) return lo;
+  for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (ok(mid)) hi = mid; else lo = mid; }
+  return hi;
+}
+function firmNeed(build, p) {
+  let need = 0;
+  for (const d of DAYS) need = Math.max(need, firmNeedDay(netLoads(build, p, d), build.batt, build.batt * BATT_HOURS));
+  return need;
+}
+function peakLoad(p) { return PEAK_MW * (1 + p.growth / 100) * Math.max(...DAYS.map(d => d.load)); }
+
+// Credit each resource in a plan gets, in MW: what the island loses if that resource is removed.
+function credits(build, p) {
+  const base = firmNeed(build, p), peak = peakLoad(p), out = {};
+  for (const k of ["solar", "wind", "batt"]) {
+    out[k] = build[k] ? firmNeed({ ...build, [k]: 0 }, p) - base : 0;
+  }
+  out.together = peak - base;
+  out.need = base;
+  out.peak = peak;
+  return out;
+}
+// Marginal credit curve: % of each added block of MW that counts as firm.
+function creditCurve(build, p, k, steps, size) {
+  const pts = [];
+  let prev = firmNeed({ ...build, [k]: 0 }, p);
+  for (let i = 1; i <= steps; i++) {
+    const mw = i * size, need = firmNeed({ ...build, [k]: mw }, p);
+    pts.push({ mw, pct: Math.max(0, (prev - need) / size) });
+    prev = need;
+  }
+  return pts;
+}
+// Does the plan have enough firm capacity? Engage-style counts nameplate; GridPath-style counts credit.
+function adequacy(build, p, prm) {
+  const peak = peakLoad(p), firm = p.oilCap + build.firm;
+  const nameplate = firm + build.solar + build.wind + build.batt;
+  const need = firmNeed(build, p);
+  return {
+    peak, firm, nameplate, need,
+    flatOK: nameplate >= peak * (1 + prm / 100),
+    elccOK: firm >= need + peak * prm / 100,
+    gap: need + peak * prm / 100 - firm
+  };
+}
+// Planning several years at once (GridPath's multiple investment periods) versus one year at a
+// time (how you'd chain Engage runs). Capacity built in a period stays for the rest of the horizon.
+const PATH_GRID = { solar: [], wind: [0, 100, 200, 300], batt: [], firm: [] };
+for (let s = 0; s <= 3000; s += 200) PATH_GRID.solar.push(s);
+for (let b = 0; b <= 2000; b += 200) PATH_GRID.batt.push(b);
+for (let f = 0; f <= 1400; f += 200) PATH_GRID.firm.push(f);
+const PERIODS_DEFAULT = [
+  { year: 2030, years: 10, re: 40, oil: 1100, growth: 0, oilPx: 90, costX: 100 },
+  { year: 2040, years: 5, re: 70, oil: 700, growth: 8, oilPx: 95, costX: 80 },
+  { year: 2045, years: 10, re: 100, oil: 0, growth: 12, oilPx: 100, costX: 72 }
+];
+const KEYS = ["solar", "wind", "batt", "firm"];
+const LIFE = { solar: 25, wind: 25, batt: 15, firm: 30 };
+const CAPEX_KEY = { solar: "solarCapex", wind: "windCapex", batt: "battCapex", firm: "firmCapex" };
+
+function pathway(p, periods, bioCounts) {
+  const r = p.discount / 100, G = PATH_GRID, dims = KEYS.map(k => G[k].length);
+  const n = dims.reduce((a, b) => a * b, 1);
+  const idx = (i) => { const o = {}; let x = i; for (let d = KEYS.length - 1; d >= 0; d--) { o[KEYS[d]] = G[KEYS[d]][x % dims[d]]; x = Math.floor(x / dims[d]); } return o; };
+  // Present-value weight of each period's years, discounted to the first year.
+  let y0 = periods[0].year;
+  const W = periods.map(pr => { let w = 0; for (let y = pr.year; y < pr.year + pr.years; y++) w += 1 / Math.pow(1 + r, y - y0); return w; });
+  const Wrem = W.map((_, t) => W.slice(t).reduce((a, b) => a + b, 0));
+  // Per-MW capital coefficient for capacity added in period t: annualized cost, paid for every remaining year.
+  const coef = periods.map((pr, t) => Object.fromEntries(KEYS.map(k => [k, p[CAPEX_KEY[k]] * pr.costX / 100 * 1000 * crf(r, LIFE[k]) * Wrem[t]])));
+  const ann = periods.map(pr => Object.fromEntries(KEYS.map(k => [k, p[CAPEX_KEY[k]] * pr.costX / 100 * 1000 * crf(r, LIFE[k])])));
+  // Operating cost (fuel + fixed O&M) and feasibility for every build in every period.
+  const opex = periods.map((pr, t) => {
+    const pp = { ...p, solarCapex: 0, windCapex: 0, battCapex: 0, firmCapex: 0, oilCap: pr.oil, growth: pr.growth, oilPrice: pr.oilPx, bioFirst: bioCounts };
+    const arr = new Float64Array(n), feas = new Uint8Array(n), re = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const res = dispatch(idx(i), pp, { reserves: false });
+      const share = bioCounts ? res.reShareBio : res.reShare;
+      arr[i] = res.cost; re[i] = share;
+      feas[i] = res.reliable && share + 1e-9 >= pr.re / 100 ? 1 : 0;
+    }
+    return { arr, feas, re };
+  });
+  const strides = dims.map((_, d) => dims.slice(d + 1).reduce((a, b) => a * b, 1));
+  const coordOf = i => dims.map((dm, d) => Math.floor(i / strides[d]) % dm);
+
+  // Foresight (GridPath): dynamic programme over cumulative builds, prefix-min over smaller builds.
+  let V = new Float64Array(n).fill(Infinity), back = [];
+  for (let i = 0; i < n; i++) if (opex[0].feas[i]) { const b = idx(i); V[i] = opex[0].arr[i] * W[0] + KEYS.reduce((a, k) => a + b[k] * coef[0][k], 0); }
+  for (let t = 1; t < periods.length; t++) {
+    const M = new Float64Array(n), A = new Int32Array(n);
+    for (let i = 0; i < n; i++) { const b = idx(i); M[i] = V[i] - KEYS.reduce((a, k) => a + b[k] * coef[t][k], 0); A[i] = i; }
+    for (let d = 0; d < dims.length; d++) for (let i = 0; i < n; i++) {
+      if (coordOf(i)[d] === 0) continue;
+      const j = i - strides[d];
+      if (M[j] < M[i]) { M[i] = M[j]; A[i] = A[j]; }
+    }
+    const V2 = new Float64Array(n).fill(Infinity);
+    for (let i = 0; i < n; i++) if (opex[t].feas[i] && isFinite(M[i])) { const b = idx(i); V2[i] = opex[t].arr[i] * W[t] + KEYS.reduce((a, k) => a + b[k] * coef[t][k], 0) + M[i]; }
+    back.push(A); V = V2;
+  }
+  let end = -1; for (let i = 0; i < n; i++) if (isFinite(V[i]) && (end < 0 || V[i] < V[end])) end = i;
+  let foresight = null;
+  if (end >= 0) {
+    const path = [end];
+    for (let t = periods.length - 1; t >= 1; t--) path.unshift(back[t - 1][path[0]]);
+    foresight = { path: path.map(idx), idxs: path, total: V[end] };
+  }
+
+  // One year at a time (chained Engage runs): each period picks its cheapest annual cost on top of what exists.
+  let prev = { solar: 0, wind: 0, batt: 0, firm: 0 }, myIdx = [], myPath = [], ok = true;
+  for (let t = 0; t < periods.length; t++) {
+    let best = -1, bc = Infinity;
+    for (let i = 0; i < n; i++) {
+      if (!opex[t].feas[i]) continue;
+      const b = idx(i);
+      if (KEYS.some(k => b[k] < prev[k])) continue;
+      const c = opex[t].arr[i] + KEYS.reduce((a, k) => a + (b[k] - prev[k]) * ann[t][k], 0) + KEYS.reduce((a, k) => a + prev[k] * 0, 0);
+      if (c < bc) { bc = c; best = i; }
+    }
+    if (best < 0) { ok = false; break; }
+    myIdx.push(best); prev = idx(best); myPath.push(prev);
+  }
+  let myopic = null;
+  if (ok) {
+    let total = 0, before = { solar: 0, wind: 0, batt: 0, firm: 0 };
+    myIdx.forEach((i, t) => { const b = idx(i); total += opex[t].arr[i] * W[t] + KEYS.reduce((a, k) => a + (b[k] - before[k]) * coef[t][k], 0); before = b; });
+    myopic = { path: myPath, idxs: myIdx, total };
+  }
+  const detail = plan => plan && plan.idxs.map((i, t) => ({ build: idx(i), re: opex[t].re[i], opex: opex[t].arr[i] }));
+  return { foresight, myopic, fDetail: detail(foresight), mDetail: detail(myopic), W, n };
+}
+
+// Plant retirements: the oil fleet unit by unit (dummy units, not real plants).
+const UNITS_DEFAULT = [
+  { id: "u1", name: "Steam 1", mw: 90,  hr: 11.8, fom: 170, built: 1962 },
+  { id: "u2", name: "Steam 2", mw: 90,  hr: 11.6, fom: 155, built: 1964 },
+  { id: "u3", name: "Steam 3", mw: 180, hr: 10.6, fom: 120, built: 1972 },
+  { id: "u4", name: "Steam 4", mw: 180, hr: 10.4, fom: 75,  built: 1975 },
+  { id: "u5", name: "Steam 5", mw: 200, hr: 10.2, fom: 70,  built: 1981 },
+  { id: "u6", name: "Combined cycle", mw: 220, hr: 8.4, fom: 55, built: 2002 },
+  { id: "u7", name: "Peaking turbines", mw: 140, hr: 12.5, fom: 20, built: 1990 }
+];
+const RET_GRID = { solar: [0, 400, 800, 1200, 1600, 2000, 2400], wind: [0, 300], batt: [0, 200, 400, 600], firm: [0, 100, 200, 300, 400] };
+
+function bestBuildFor(units, p, minRE) {
+  const kept = units.filter(u => u.keep).sort((a, b) => a.hr - b.hr);
+  const pp = { ...p, oilCap: kept.reduce((a, u) => a + u.mw, 0), units: kept };
+  let best = null;
+  for (const c of evaluateAll(pp, { reserves: false }, RET_GRID)) {
+    if (!c.r.reliable || c.r.reShare + 1e-9 < minRE / 100) continue;
+    if (!best || c.r.cost < best.r.cost) best = c;
+  }
+  return best && { ...best, units: kept, pp };
+}
+// GridPath-style: decide each unit. Greedy: retire whichever unit saves the most, repeat until none does.
+function retirements(p, minRE, unitsIn) {
+  const fleet = unitsIn.map(u => ({ ...u, keep: true }));
+  const engage = bestBuildFor(fleet, p, minRE);
+  let cur = engage, keep = fleet.map(u => ({ ...u })), steps = [];
+  for (;;) {
+    let bestTry = null, which = null;
+    for (const u of keep.filter(x => x.keep)) {
+      const trial = keep.map(x => ({ ...x, keep: x.id === u.id ? false : x.keep }));
+      const r = bestBuildFor(trial, p, minRE);
+      if (r && (!bestTry || r.r.cost < bestTry.r.cost)) { bestTry = r; which = { u, trial }; }
+    }
+    if (!bestTry || !cur || bestTry.r.cost >= cur.r.cost - 1e5) break;
+    steps.push({ unit: which.u, saves: cur.r.cost - bestTry.r.cost });
+    cur = bestTry; keep = which.trial;
+  }
+  return { engage, gridpath: cur, keep, steps };
+}
+// How hard each unit runs in a plan: hourly oil output split by merit order.
+function unitUse(plan, p) {
+  const hours = dispatch(plan.build, plan.pp, { reserves: false }, true).hours, use = {};
+  plan.units.forEach(u => use[u.id] = 0);
+  for (const d of DAYS) for (const row of hours[d.id]) {
+    let left = row.oil;
+    for (const u of plan.units) { const g = Math.min(left, u.mw); use[u.id] += g * d.w; left -= g; }
+  }
+  return use;
+}
+// Parameters HSEO would set in Engage. Defaults are the dummy sample island.
+const BASE_FIELDS = [
+  { group: "Build costs", fields: [
+    { id: "solarCapex", label: "Utility solar", unit: "$/kW", v: 2100, step: 50 },
+    { id: "windCapex",  label: "Onshore wind", hint: "Max 300 MW of sites", unit: "$/kW", v: 3200, step: 50 },
+    { id: "battCapex",  label: "Battery, 4-hour", unit: "$/kW", v: 1600, step: 50 },
+    { id: "firmCapex",  label: "New firm turbine", hint: "Burns biodiesel", unit: "$/kW", v: 1400, step: 50 },
+    { id: "discount",   label: "Discount rate", unit: "%", v: 7, step: 0.5 }
+  ]},
+  { group: "Fuel", fields: [
+    { id: "oilPrice", label: "Fuel oil", unit: "$/bbl", v: 90, step: 1 },
+    { id: "bioPrice", label: "Biodiesel", unit: "$/MMBtu", v: 25, step: 0.5 }
+  ]},
+  { group: "Island system", fields: [
+    { id: "growth", label: "Load growth", hint: "vs. 1,150 MW peak", unit: "%", v: 0, step: 1 },
+    { id: "oilCap", label: "Oil fleet kept", hint: "After retirements", unit: "MW", v: 1100, step: 50 },
+    { id: "minRE",  label: "Renewable share", hint: "Minimum, of annual energy", unit: "%", v: 40, step: 5 }
+  ]}
+];
+
+function fieldHTML(f) {
+  return `<div class="field"><label for="${f.id}">${f.label}${f.hint ? `<small>${f.hint}</small>` : ""}</label>
+    <div class="inp"><input id="${f.id}" type="number" inputmode="decimal" step="${f.step}" value="${f.v}"><span>${f.unit}</span></div></div>`;
+}
+function renderRail(el, addon) {
+  const groups = BASE_FIELDS.map(g => `<fieldset><legend>${g.group}</legend>${g.fields.map(fieldHTML).join("")}</fieldset>`);
+  if (addon) groups.push(`<fieldset class="addon"><legend>${addon.group}</legend>${addon.fields.map(fieldHTML).join("")}</fieldset>`);
+  el.innerHTML = `<h2>Scenario parameters</h2>${groups.join("")}
+    <div class="actions"><button class="btn primary" id="solve" type="button">Solve</button><button class="btn" id="reset" type="button">Reset to sample</button></div>
+    <p class="status" id="status" role="status"></p>`;
+}
+function allFields(addon) { return BASE_FIELDS.flatMap(g => g.fields).concat(addon ? addon.fields : []); }
+function readParams(addon) {
+  const p = {};
+  for (const f of allFields(addon)) {
+    const n = parseFloat(document.getElementById(f.id).value);
+    p[f.id] = Number.isFinite(n) ? n : f.v;
+  }
+  p.discount = Math.max(0.5, p.discount);
+  return p;
+}
+function wireRail(addon, run) {
+  let timer;
+  const later = () => { clearTimeout(timer); timer = setTimeout(run, 500); };
+  for (const f of allFields(addon)) document.getElementById(f.id).addEventListener("input", later);
+  document.getElementById("solve").addEventListener("click", run);
+  document.getElementById("reset").addEventListener("click", () => {
+    for (const f of allFields(addon)) document.getElementById(f.id).value = f.v;
+    run();
+  });
+}
+// Run heavy work after the browser has painted the "solving" state.
+function solving(msg, work) {
+  document.body.classList.add("busy");
+  document.getElementById("status").textContent = msg;
+  requestAnimationFrame(() => setTimeout(() => {
+    const t0 = performance.now();
+    work();
+    document.body.classList.remove("busy");
+    document.getElementById("status").textContent = `Solved in ${((performance.now() - t0) / 1000).toFixed(1)} s on sample data.`;
+  }, 20));
+}
+
+const fmtMW = v => `${Math.round(v).toLocaleString()} MW`;
+const fmtM = v => `$${(v / 1e6).toLocaleString(undefined, { maximumFractionDigits: 0 })}M`;
+const fmtPct = v => `${(v * 100).toFixed(0)}%`;
+const fmtGWh = v => `${(v / 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })} GWh`;
+const TECHS = [
+  { k: "solar", name: "Utility solar" }, { k: "wind", name: "Wind" },
+  { k: "batt", name: "Battery (4 h)" }, { k: "firm", name: "New firm turbines" }
+];
+function planSentence(b) {
+  const parts = TECHS.filter(t => b[t.k] > 0).map(t => `${b[t.k].toLocaleString()} MW ${t.name.toLowerCase()}`);
+  return parts.length ? parts.join(", ") : "nothing new";
+}
+const ADDON = { group: "Operating rules (add-on)", fields: [
+  { id: "resLoad",  label: "Spinning reserve", hint: "Share of load", unit: "%", v: 10, step: 1 },
+  { id: "resSolar", label: "Extra for solar", hint: "Share of solar output", unit: "%", v: 15, step: 1 },
+  { id: "minLoad",  label: "Oil minimum load", hint: "When a unit is on", unit: "%", v: 40, step: 5 }
+]};
+const SERIES = [
+  { k: "firm",  name: "New turbines", c: "var(--s-firm)" },
+  { k: "oil",   name: "Oil",          c: "var(--s-oil)" },
+  { k: "wind",  name: "Wind",         c: "var(--s-wind)" },
+  { k: "solar", name: "Solar",        c: "var(--s-solar)" },
+  { k: "batt",  name: "Battery out",  c: "var(--s-batt)" }
+];
+const state = { plan: "addon", day: "summer", res: null, p: null };
+
+renderRail(document.getElementById("rail"), ADDON);
+wireRail(ADDON, () => run());
+
+let run = function () {
+  solving("Solving both plans…", () => {
+    const p = readParams(ADDON);
+    state.energyList = evaluateAll(p, { reserves: false });
+    const energyOnly = cheapest(state.energyList, p.minRE);
+    const withRules = cheapest(evaluateAll(p, { reserves: true }), p.minRE);
+    state.p = p;
+    state.res = {
+      engage: energyOnly && { build: energyOnly.build, r: dispatch(energyOnly.build, p, { reserves: false }, true) },
+      engageOps: energyOnly && { build: energyOnly.build, r: dispatch(energyOnly.build, p, { reserves: true }, true) },
+      addon: withRules && { build: withRules.build, r: dispatch(withRules.build, p, { reserves: true }, true) }
+    };
+    render();
+  });
+};
+
+function render() {
+  const { engage, engageOps, addon } = state.res, p = state.p;
+  const ans = document.getElementById("answer");
+  if (!addon) {
+    ans.innerHTML = `<span class="k">No workable plan</span>
+      <p class="big">Nothing in the search space reaches ${p.minRE}% renewable while meeting load and reserves.</p>
+      <p>Lower the renewable target, keep more oil capacity, or lower the reserve settings. The search tops out at 3,000 MW solar, 300 MW wind, 2,000 MW battery and 400 MW of new turbines.</p>`;
+  } else {
+    ans.innerHTML = answerHTML(engage, engageOps, addon, p);
+  }
+
+  const cols = [
+    { key: "engage", h: "Engage plan<br>as Engage reports it" },
+    { key: "engageOps", h: "Engage plan<br>under operating rules" },
+    { key: "addon", h: "Add-on plan<br>under operating rules", us: true }
+  ];
+  const rows = [
+    ...TECHS.map(t => ({ label: `${t.name} built`, f: x => fmtMW(x.build[t.k]) })),
+    { label: "Annual cost (build + fuel)", f: x => fmtM(x.r.cost) },
+    { label: "Cost per MWh", f: x => `$${x.r.perMWh.toFixed(0)}` },
+    { label: "Renewable share", f: x => fmtPct(x.r.reShare) },
+    { label: "Solar and wind curtailed", f: x => fmtGWh(x.r.curtail) },
+    { label: "Hours short of reserve", f: (x, k) => k === "engage" ? `<span class="chip warn">not checked</span>`
+        : x.r.shortHours < 0.5 ? `<span class="chip good">0 h</span>` : `<span class="chip crit">${Math.round(x.r.shortHours)} h / yr</span>` }
+  ];
+  document.getElementById("cmp").innerHTML = `<thead><tr><th scope="col">Sample island, ${p.minRE}% renewable</th>${cols.map(c => `<th scope="col" class="${c.us ? "us" : ""}">${c.h}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(r => `<tr><th scope="row" style="font-weight:400">${r.label}</th>${cols.map(c => {
+      const x = state.res[c.key];
+      return `<td class="${c.us ? "us" : ""}">${x ? r.f(x, c.key) : "—"}</td>`;
+    }).join("")}</tr>`).join("")}</tbody>`;
+
+  const plans = [["engageOps", "Engage plan"], ["addon", "Add-on plan"]].filter(([k]) => state.res[k]);
+  if (!plans.some(([k]) => k === state.plan) && plans.length) state.plan = plans[0][0];
+  seg("planSeg", plans, state.plan, v => { state.plan = v; drawDay(); });
+  seg("daySeg", DAYS.map(d => [d.id, d.name]), state.day, v => { state.day = v; drawDay(); });
+  document.getElementById("legend").innerHTML = SERIES.map(s => `<span><i class="sw" style="background:${s.c}"></i>${s.name}</span>`).join("")
+    + `<span><i class="sw line"></i>Load</span><span><i class="sw dash"></i>Load + reserve needed</span><span><i class="sw" style="background:var(--crit)"></i>Short of reserve</span>`;
+  drawDay();
+}
+
+function seg(id, opts, cur, on) {
+  const el = document.getElementById(id);
+  el.innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${v === cur}">${l}</button>`).join("");
+  el.onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    el.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    on(b.dataset.v);
+  };
+}
+
+function drawDay() {
+  const plan = state.res[state.plan];
+  const chart = document.getElementById("chart");
+  if (!plan) { chart.innerHTML = ""; return; }
+  const rows = plan.r.hours[state.day];
+  const W = 720, H = 300, L = 52, R = 10, T = 12, B = 30;
+  const top = Math.max(...rows.map(r => Math.max(r.load + r.reserve, SERIES.reduce((a, s) => a + r[s.k], 0))));
+  const ymax = Math.ceil(top * 1.08 / 200) * 200;
+  const y = v => T + (H - T - B) * (1 - v / ymax);
+  const bw = (W - L - R) / 24, x = h => L + h * bw;
+  let g = "";
+  for (let v = 0; v <= ymax; v += 200) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v.toLocaleString()}</text>`;
+  for (let h = 0; h <= 24; h += 3) g += `<text x="${x(h)}" y="${H - 10}" text-anchor="middle">${String(h).padStart(2, "0")}:00</text>`;
+  g += `<text x="${L - 6}" y="${T - 2}" text-anchor="end" style="font-size:10px">MW</text>`;
+  let bars = "";
+  rows.forEach((r, h) => {
+    let base = 0;
+    for (const s of SERIES) {
+      const v = r[s.k]; if (v < 0.5) continue;
+      bars += `<rect x="${x(h) + 1}" y="${y(base + v)}" width="${bw - 2}" height="${Math.max(0, y(base) - y(base + v))}" style="fill:${s.c};stroke:var(--surface)" stroke-width="1"/>`;
+      base += v;
+    }
+    if (r.short > 0.5) bars += `<rect x="${x(h) + 1}" y="${H - B + 3}" width="${bw - 2}" height="5" rx="1" style="fill:var(--crit)"/>`;
+  });
+  const step = k => rows.map((r, h) => `${h ? "L" : "M"}${x(h)},${y(k(r))} L${x(h + 1)},${y(k(r))}`).join(" ");
+  const lines = `<path d="${step(r => r.load + r.reserve)}" style="fill:none;stroke:var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <path d="${step(r => r.load)}" style="fill:none;stroke:var(--ink)" stroke-width="2"/>`;
+  chart.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Stacked hourly supply for ${state.plan === "addon" ? "the add-on plan" : "Engage's plan"} on the ${DAYS.find(d => d.id === state.day).name.toLowerCase()}">${g}${bars}${lines}
+    <rect id="hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" style="fill:transparent"/><line id="cross" y1="${T}" y2="${H - B}" style="stroke:var(--muted)" stroke-width="1" visibility="hidden"/></svg><div class="tip" hidden></div>`;
+
+  const svg = chart.querySelector("svg"), tip = chart.querySelector(".tip"), cross = chart.querySelector("#cross");
+  const show = ev => {
+    const pt = svg.getBoundingClientRect(), sx = (ev.clientX - pt.left) * W / pt.width;
+    const h = Math.min(23, Math.max(0, Math.floor((sx - L) / bw))), r = rows[h];
+    cross.setAttribute("x1", x(h) + bw / 2); cross.setAttribute("x2", x(h) + bw / 2); cross.setAttribute("visibility", "visible");
+    tip.hidden = false;
+    tip.innerHTML = `<b>${String(h).padStart(2, "0")}:00–${String(h + 1).padStart(2, "0")}:00</b>`
+      + SERIES.slice().reverse().map(s => `<div><i><i class="sw" style="background:${s.c}"></i>${s.name}</i><span>${Math.round(r[s.k])} MW</span></div>`).join("")
+      + `<div><i>Battery charging</i><span>${Math.round(r.charge)} MW</span></div><div><i>Curtailed</i><span>${Math.round(r.curtail)} MW</span></div>`
+      + `<div><i>Load</i><span>${Math.round(r.load)} MW</span></div><div><i>Reserve needed</i><span>${Math.round(r.reserve)} MW</span></div>`
+      + (r.short > 0.5 ? `<div style="color:var(--crit)"><i style="color:var(--crit)">Reserve short</i><span>${Math.round(r.short)} MW</span></div>` : "");
+    const cw = chart.clientWidth, px = (x(h) + bw) * pt.width / W + chart.scrollLeft;
+    tip.style.left = `${Math.min(px + 8, chart.scrollLeft + cw - tip.offsetWidth - 4)}px`;
+    tip.style.top = `8px`;
+  };
+  svg.addEventListener("pointermove", show);
+  svg.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+
+  const shortH = rows.filter(r => r.short > 0.5).length, chargeAbove = rows.some(r => r.charge > 1);
+  document.getElementById("chartNote").textContent =
+    (state.plan === "engageOps" ? "Engage's plan, run under the operating rules. " : "The add-on's plan. ")
+    + (shortH ? `On this day it's short of reserve for ${shortH} hour${shortH > 1 ? "s" : ""}, marked in red under the axis. ` : "It holds enough reserve every hour of this day. ")
+    + (chargeAbove ? "Where bars rise above the load line, the extra is charging the battery." : "")
+    + ` This day stands for ${DAYS.find(d => d.id === state.day).w} days of the year.`;
+
+  const tbl = document.getElementById("dayTable");
+  tbl.innerHTML = `<table><thead><tr><th scope="col">Hour</th>${SERIES.map(s => `<th scope="col">${s.name}</th>`).join("")}<th scope="col">Charging</th><th scope="col">Curtailed</th><th scope="col">Load</th><th scope="col">Reserve needed</th><th scope="col">Short</th></tr></thead><tbody>`
+    + rows.map((r, h) => `<tr><td>${String(h).padStart(2, "0")}:00</td>${SERIES.map(s => `<td>${Math.round(r[s.k])}</td>`).join("")}<td>${Math.round(r.charge)}</td><td>${Math.round(r.curtail)}</td><td>${Math.round(r.load)}</td><td>${Math.round(r.reserve)}</td><td>${r.short > 0.5 ? Math.round(r.short) : ""}</td></tr>`).join("")
+    + `</tbody></table>`;
+}
+
+document.getElementById("tableToggle").addEventListener("click", e => {
+  const t = document.getElementById("dayTable"); t.hidden = !t.hidden;
+  e.target.setAttribute("aria-expanded", String(!t.hidden));
+  e.target.textContent = t.hidden ? "Show this day as a table" : "Hide the table";
+});
+
+
+/* ---------- The answer box ---------- */
+const MIXC = [["solar", "Solar", "var(--s-solar)"], ["wind", "Wind", "var(--s-wind)"], ["oil", "Existing oil", "var(--s-oil)"], ["firm", "New turbines", "var(--s-firm)"]];
+const MAXB = { solar: 3000, wind: 300, batt: 2000, firm: 400 };
+function answerHTML(engage, engageOps, addon, p) {
+  const b = addon.build, e = engage && engage.build;
+  const short = engageOps ? engageOps.r.shortHours : 0, extra = engage ? addon.r.cost - engage.r.cost : 0;
+  const tiles = TECHS.map(t => {
+    const v = b[t.k], ev = e ? e[t.k] : null, d = ev == null ? 0 : v - ev;
+    return `<div class="tile"><span class="nm">${t.name}</span>
+      <span class="mw">${v.toLocaleString()}<small> MW</small></span>
+      <span class="meter2" aria-hidden="true"><i class="us" style="width:${v / MAXB[t.k] * 100}%"></i>${ev != null ? `<i class="them" style="width:${ev / MAXB[t.k] * 100}%"></i>` : ""}</span>
+      <span class="delta ${d ? "ch" : ""}">${ev == null ? "" : d ? `${d > 0 ? "+" : "−"}${Math.abs(d).toLocaleString()} MW vs Engage` : "Same as Engage"}</span></div>`;
+  }).join("");
+  const tot = MIXC.reduce((a, m) => a + addon.r[m[0]], 0) || 1;
+  const shares = MIXC.map(([k, n, c]) => ({ n, c, v: addon.r[k] / tot }));
+  const pct = v => v > 0 && v < 0.005 ? "<1%" : `${Math.round(v * 100)}%`;
+  return `
+    <span class="k">The answer · cheapest plan the grid can operate</span>
+    <div class="hero-top">
+      <div class="hero-cost"><span class="n">${fmtM(addon.r.cost)}<small> a year</small></span></div>
+      <div class="kpis">
+        <div class="kpi"><b>$${addon.r.perMWh.toFixed(0)}</b><span>per MWh delivered</span></div>
+        <div class="kpi"><b>${fmtPct(addon.r.reShare)}</b><span>renewable (target ${p.minRE}%)</span></div>
+        <div class="kpi"><b>0 h</b><span>short of reserve</span></div>
+      </div>
+    </div>
+    <div class="tiles">${tiles}</div>
+    <div class="tile-key"><span><i class="sw" style="background:var(--accent)"></i>This plan</span>${e ? `<span><i class="sw ghost"></i>Engage's plan</span>` : ""}</div>
+    <div class="mixwrap"><h3>Where the island's electricity comes from</h3>
+      <div class="mix" role="img" aria-label="${shares.map(s => `${s.n} ${pct(s.v)}`).join(", ")}">${shares.filter(s => s.v > 0.004).map(s => `<i style="flex:${s.v};background:${s.c}" title="${s.n} ${pct(s.v)}"></i>`).join("")}</div>
+      <div class="mixlab">${shares.map(s => `<span><i class="sw" style="background:${s.c}"></i>${s.n} <b>${pct(s.v)}</b></span>`).join("")}</div></div>
+    ${engageOps ? `<div class="why">
+      <h3>${short > 0.5 ? `Why not Engage's plan? It's ${fmtM(Math.max(0, extra))}/yr cheaper, but runs short of reserve ${Math.round(short)} hours a year.` : "Engage's plan also holds enough reserve with these settings."}</h3>
+      <div class="hourmaps">${hourMap("Engage's plan", engageOps)}${hourMap("This plan", addon)}</div>
+      <div class="tile-key"><span><i class="sw" style="background:var(--good-cell)"></i>Enough reserve</span><span><i class="sw" style="background:var(--crit)"></i>Short of reserve</span><span>Each row is one representative day standing in for the number of days shown. Hover a cell for details.</span></div>
+    </div>` : ""}`;
+}
+function hourMap(title, plan) {
+  const rows = DAYS.map(d => {
+    const cells = plan.r.hours[d.id].map((r, h) => {
+      const bad = r.short > 0.5;
+      return `<i class="${bad ? "bad" : ""}" title="${d.name}, ${String(h).padStart(2, "0")}:00 · reserve needed ${Math.round(r.reserve)} MW${bad ? ` · short ${Math.round(r.short)} MW` : " · covered"}"></i>`;
+    }).join("");
+    return `<div class="hm-row"><span class="hm-day">${d.name}<small>×${d.w} days</small></span><span class="hm-cells">${cells}</span></div>`;
+  }).join("");
+  const shortH = Math.round(plan.r.shortHours);
+  const spells = DAYS.map(d => {
+    const hs = plan.r.hours[d.id].map((r, h) => ({ h, s: r.short })).filter(x => x.s > 0.5);
+    if (!hs.length) return null;
+    const hh = h => `${String(h).padStart(2, "0")}:00`;
+    return `${d.name.endsWith("day") ? d.name.replace(" day", "") + " days" : d.name + " days"} ${hh(hs[0].h)}–${hh(hs[hs.length - 1].h + 1)}, up to ${Math.round(Math.max(...hs.map(x => x.s)))} MW short (${hs.length * d.w} h/yr)`;
+  }).filter(Boolean);
+  return `<figure class="hm"><figcaption><b>${title}</b><span class="chip ${shortH ? "crit" : "good"}">${shortH ? `${shortH} h/yr short` : "Never short"}</span></figcaption>${rows}
+    <div class="hm-row"><span class="hm-day"></span><span class="hm-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></span></div>
+    <p class="hm-note">${spells.length ? `Short on ${spells.join("; ")}.` : "Holds enough reserve every hour of every representative day."}</p></figure>`;
+}
+
+/* ---------- Tabs ---------- */
+const TAB = { tab: "res" };
+const tabBtns = [...document.querySelectorAll(".subtabs button")];
+function showTab(t) {
+  TAB.tab = t;
+  tabBtns.forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  ["res", "elcc", "path", "ret"].forEach(id => document.getElementById(`tab-${id}`).hidden = id !== t);
+  refreshTab();
+}
+function refreshTab() {
+  if (!state.p) return;
+  if (TAB.tab === "elcc") renderElcc();
+  if (TAB.tab === "path" && !X.path) runPath();
+  if (TAB.tab === "ret" && !X.ret) runRet();
+}
+tabBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+const X = { path: null, ret: null, ePlan: "engage" };
+const _run = run;
+run = function () {
+  X.path = null; X.ret = null;
+  document.getElementById("pathOut").innerHTML = ""; document.getElementById("retOut").innerHTML = "";
+  _run();
+  waitThen(() => refreshTab());
+};
+// The main solve finishes asynchronously; poll briefly for its result before refreshing a tab.
+function waitThen(fn) { const t0 = performance.now(); (function tick() { if (state.res && !document.body.classList.contains("busy")) fn(); else if (performance.now() - t0 < 15000) setTimeout(tick, 80); })(); }
+function segB(id, opts, cur, on) {
+  const el = document.getElementById(id);
+  el.innerHTML = opts.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(v) === String(cur)}">${l}</button>`).join("");
+  el.onclick = e => { const b = e.target.closest("button"); if (b) on(b.dataset.v); };
+}
+function busyStatus(id, msg, work) {
+  const st = document.getElementById(id); st.textContent = msg; document.body.classList.add("busy");
+  requestAnimationFrame(() => setTimeout(() => { const t0 = performance.now(); work(); document.body.classList.remove("busy"); st.textContent = `Done in ${((performance.now() - t0) / 1000).toFixed(1)} s.`; }, 20));
+}
+
+/* ---------- Capacity credit (ELCC) ---------- */
+document.getElementById("prm").addEventListener("input", () => renderElcc());
+function elccPlans() {
+  const p = state.p, prm = parseFloat(document.getElementById("prm").value) || 0;
+  const list = [];
+  if (state.res.engage) list.push(["engage", "Engage's plan", state.res.engage]);
+  if (state.res.addon) list.push(["addon", "Reserves plan", state.res.addon]);
+  let best = null;
+  for (const c of state.energyList || []) {
+    if (!c.r.reliable || c.r.reShare + 1e-9 < p.minRE / 100) continue;
+    if (!adequacy(c.build, p, prm).elccOK) continue;
+    if (!best || c.r.cost < best.r.cost) best = c;
+  }
+  if (best) list.push(["adequate", "Cheapest that passes", best]);
+  return { list, best, prm };
+}
+function bindingHour(build, p) {
+  let best = null;
+  for (const d of DAYS) {
+    const need = firmNeedDay(netLoads(build, p, d), build.batt, build.batt * BATT_HOURS);
+    if (!best || need > best.need) { const n = netLoads(build, p, d); best = { need, day: d, h: n.indexOf(Math.max(...n)) }; }
+  }
+  return best;
+}
+function renderElcc() {
+  if (!state.res) return;
+  const p = state.p, { list, best, prm } = elccPlans();
+  if (!list.some(x => x[0] === X.ePlan)) X.ePlan = list[0][0];
+  segB("ePlan", list.map(x => [x[0], x[1]]), X.ePlan, v => { X.ePlan = v; renderElcc(); });
+  const plan = list.find(x => x[0] === X.ePlan)[2], b = plan.build;
+  const a = adequacy(b, p, prm), cr = credits(b, p), eng = state.res.engage;
+  const needAll = a.peak * (1 + prm / 100);
+  document.getElementById("eStats").innerHTML = `
+    <div class="stat ${a.flatOK ? "okk" : "bad"}"><span class="who">Engage's check · every MW counts</span>
+      <span class="n">${a.flatOK ? "Passes" : "Fails"}</span>
+      <p>${Math.round(a.nameplate).toLocaleString()} MW of capacity against ${Math.round(needAll).toLocaleString()} MW needed (peak ${Math.round(a.peak).toLocaleString()} MW plus ${prm}%).</p></div>
+    <div class="stat ${a.elccOK ? "okk" : "bad"}"><span class="who">GridPath · capacity credit</span>
+      <span class="n">${a.elccOK ? "Passes" : `Short ${Math.ceil(a.gap)} MW`}</span>
+      <p>Firm capacity ${Math.round(a.firm).toLocaleString()} MW plus ${Math.round(cr.together)} MW of credit from solar, wind and batteries, against ${Math.round(needAll).toLocaleString()} MW needed.</p></div>
+    <div class="stat hl"><span class="who">Cheapest plan that passes</span>
+      <span class="n">${best ? (eng && best.r.cost - eng.r.cost > 1e5 ? `+${fmtM(best.r.cost - eng.r.cost)}/yr` : "No extra cost") : "None found"}</span>
+      <p>${best ? `Builds ${planSentence(best.build)}. ${eng ? (best.r.cost - eng.r.cost > 1e5 ? "That's the cost of being genuinely adequate rather than adequate on paper." : "Engage's plan already passes.") : ""}` : "Nothing in the search space passes. Lower the margin or keep more oil."}</p></div>`;
+  const bh = bindingHour(b, p);
+  document.getElementById("eBind").textContent = `The tightest hour for this plan is ${String(bh.h).padStart(2, "0")}:00 on ${bh.day.name.endsWith("day") ? "a " + bh.day.name.toLowerCase() : "a " + bh.day.name + " day"}, when the island still needs ${Math.round(a.need).toLocaleString()} MW from firm units after solar, wind and batteries.`;
+  const sumInd = cr.solar + cr.wind + cr.batt;
+  const rows = [
+    ["Existing oil", p.oilCap, p.oilCap], ["New firm turbines", b.firm, b.firm],
+    ["Utility solar", b.solar, cr.solar], ["Wind", b.wind, cr.wind], ["Battery (4 h)", b.batt, cr.batt]
+  ];
+  const pc = (c, mw) => mw > 0 ? `${Math.round(c / mw * 100)}%` : "—";
+  document.getElementById("eTable").innerHTML = `<thead><tr><th scope="col">Resource</th><th scope="col">Built (MW)</th><th scope="col">Engage counts</th><th scope="col">Capacity credit</th><th scope="col">Credit as % of MW</th></tr></thead><tbody>`
+    + rows.map(([n, mw, c]) => `<tr><td>${n}</td><td>${Math.round(mw).toLocaleString()}</td><td>${Math.round(mw).toLocaleString()} MW</td><td class="us">${Math.round(c).toLocaleString()} MW</td><td>${pc(c, mw)}</td></tr>`).join("")
+    + `<tr><td>Solar, wind and batteries together</td><td>${(b.solar + b.wind + b.batt).toLocaleString()}</td><td>${(b.solar + b.wind + b.batt).toLocaleString()} MW</td><td class="us">${Math.round(cr.together)} MW</td><td>${pc(cr.together, b.solar + b.wind + b.batt)}</td></tr></tbody>`
+    + `<caption style="caption-side:bottom;text-align:left;padding-top:0.6rem;font-size:0.8125rem;color:var(--muted)">Each resource's credit is how much more firm capacity the island would need without it. ${cr.together - sumInd > 5 ? `Together they're worth ${Math.round(cr.together - sumInd)} MW more than the sum of their separate credits, because solar recharges the batteries.` : ""}</caption>`;
+  drawCreditChart(b, p);
+}
+function drawCreditChart(b, p) {
+  const levels = [[0, "No solar", "var(--s-wind)"], [b.solar, `${b.solar.toLocaleString()} MW solar (this plan)`, "var(--s-oil)"], [2400, "2,400 MW solar", "var(--s-batt)"]]
+    .filter((x, i, a) => a.findIndex(y => y[0] === x[0]) === i);
+  const series = levels.map(([s, name, c]) => ({ name, c, pts: creditCurve({ ...b, solar: s }, p, "batt", 10, 100) }));
+  const W = 720, H = 300, L = 52, R = 150, T = 14, B = 40;
+  const X0 = mw => L + (W - L - R) * (mw - 100) / 900, Y0 = v => T + (H - T - B) * (1 - v);
+  let g = "";
+  for (let v = 0; v <= 1.0001; v += 0.25) g += `<line x1="${L}" x2="${W - R}" y1="${Y0(v)}" y2="${Y0(v)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y0(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+  for (let mw = 100; mw <= 1000; mw += 100) g += `<text x="${X0(mw)}" y="${H - B + 18}" text-anchor="middle">${mw}</text>`;
+  g += `<text x="${L + (W - L - R) / 2}" y="${H - 4}" text-anchor="middle">Battery built (MW) · each point is the 100 MW block ending there</text>`;
+  const labelsY = [];
+  series.forEach(s => {
+    g += `<path d="${s.pts.map((q, i) => `${i ? "L" : "M"}${X0(q.mw)},${Y0(Math.min(1, q.pct))}`).join(" ")}" style="fill:none;stroke:${s.c}" stroke-width="2"/>`;
+    s.pts.forEach(q => g += `<circle class="pt" cx="${X0(q.mw)}" cy="${Y0(Math.min(1, q.pct))}" r="4" style="fill:${s.c};stroke:var(--surface)" stroke-width="2" data-t="${s.name}: block ${q.mw - 100}–${q.mw} MW counts ${Math.round(Math.min(1, q.pct) * 100)}%"/>`);
+    const last = s.pts[s.pts.length - 1]; let ly = Y0(Math.min(1, last.pct)) + 4;
+    while (labelsY.some(y => Math.abs(y - ly) < 14)) ly -= 14; labelsY.push(ly);
+    g += `<text x="${W - R + 8}" y="${ly}" style="fill:var(--ink)">${s.name}</text>`;
+  });
+  const el = document.getElementById("eChart");
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Battery capacity credit falling as more battery is added, for three solar levels">${g}</svg><div class="tip" hidden></div>`;
+  document.getElementById("eLegend").innerHTML = series.map(s => `<span><i class="sw dot" style="background:${s.c}"></i>${s.name}</span>`).join("");
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip");
+  svg.addEventListener("pointermove", ev => {
+    const t = ev.target.closest(".pt"); if (!t) { tip.hidden = true; return; }
+    tip.hidden = false; tip.innerHTML = `<b>${t.dataset.t}</b>`;
+    const box = el.getBoundingClientRect();
+    tip.style.left = `${Math.min(ev.clientX - box.left + el.scrollLeft + 12, el.scrollLeft + el.clientWidth - tip.offsetWidth - 4)}px`;
+    tip.style.top = `${Math.max(4, ev.clientY - box.top - tip.offsetHeight - 12)}px`;
+  });
+  svg.addEventListener("pointerleave", () => tip.hidden = true);
+}
+
+/* ---------- Pathway ---------- */
+const PER_COLS = [["re", "Renewable target", "%"], ["oil", "Oil fleet kept", "MW"], ["growth", "Demand growth", "%"], ["costX", "Build costs vs 2030", "%"], ["oilPx", "Oil price", "$/bbl"]];
+document.getElementById("perTable").innerHTML = `<thead><tr><th scope="col">Period</th>${PER_COLS.map(c => `<th scope="col">${c[1]} (${c[2]})</th>`).join("")}</tr></thead><tbody>`
+  + PERIODS_DEFAULT.map((pr, i) => `<tr><td>${pr.year}<small>${pr.year}–${pr.year + pr.years - 1}</small></td>${PER_COLS.map(c => `<td><input type="number" id="per${i}-${c[0]}" value="${pr[c[0]]}" step="1" aria-label="${pr.year} ${c[1]}"></td>`).join("")}</tr>`).join("") + `</tbody>`;
+document.getElementById("pathRun").addEventListener("click", runPath);
+const STACK = [["firm", "New turbines", "var(--s-firm)"], ["oil", "Existing oil", "var(--s-oil)"], ["wind", "Wind", "var(--s-wind)"], ["solar", "Solar", "var(--s-solar)"], ["batt", "Battery", "var(--s-batt)"]];
+function runPath() {
+  busyStatus("pathStatus", "Planning all three periods…", () => {
+    const periods = PERIODS_DEFAULT.map((pr, i) => {
+      const o = { ...pr };
+      PER_COLS.forEach(c => { const n = parseFloat(document.getElementById(`per${i}-${c[0]}`).value); if (Number.isFinite(n)) o[c[0]] = n; });
+      return o;
+    });
+    const bio = document.getElementById("bioRE").checked;
+    X.path = { periods, bio, view: (X.path && X.path.view) || "cap", out: pathway(state.p, periods, bio) };
+    X.path.perf = pathPerformance(X.path);
+    renderPath();
+  });
+}
+// Energy, renewable share and annual cost in each period for the chosen pathway.
+function pathPerformance(P) {
+  const { periods, out, bio } = P, f = out.foresight, p = state.p, r = p.discount / 100;
+  if (!f) return null;
+  const KEYS4 = ["solar", "wind", "batt", "firm"];
+  return periods.map((pr, t) => {
+    const pp = { ...p, solarCapex: 0, windCapex: 0, battCapex: 0, firmCapex: 0, oilCap: pr.oil, growth: pr.growth, oilPrice: pr.oilPx, bioFirst: bio };
+    const res = dispatch(f.path[t], pp, { reserves: false });
+    let capital = 0;
+    for (let v = 0; v <= t; v++) for (const k of KEYS4) {
+      const added = f.path[v][k] - (v ? f.path[v - 1][k] : 0);
+      capital += added * p[CAPEX_KEY[k]] * periods[v].costX / 100 * 1000 * crf(r, LIFE[k]);
+    }
+    const tot = res.solar + res.wind + res.oil + res.firm || 1;
+    return {
+      capital, running: res.cost, total: capital + res.cost,
+      mix: { solar: res.solar / tot, wind: res.wind / tot, oil: res.oil / tot, firm: res.firm / tot },
+      re: bio ? res.reShareBio : res.reShare, perMWh: (capital + res.cost) / res.load
+    };
+  });
+}
+function renderPath() {
+  const { periods, out, perf } = X.path, el = document.getElementById("pathOut");
+  const f = out.foresight, m = out.myopic;
+  if (!f) { el.innerHTML = `<section class="answer"><span class="k">No workable pathway</span><p>No sequence of builds meets every period's renewable target while keeping the lights on. Lower a target, keep more oil, or count biodiesel as renewable.</p></section>`; return; }
+  const KEYS4 = ["solar", "wind", "batt", "firm"], last = periods.length - 1;
+  const added = t => Object.fromEntries(KEYS4.map(k => [k, f.path[t][k] - (t ? f.path[t - 1][k] : 0)]));
+  const totalNew = KEYS4.reduce((a, k) => a + f.path[last][k], 0);
+  const diff = m ? m.total - f.total : null;
+  const NAMES = { solar: "Solar", wind: "Wind", batt: "Battery", firm: "New turbines" };
+  const COLORS = { solar: "var(--s-solar)", wind: "var(--s-wind)", batt: "var(--s-batt)", firm: "var(--s-firm)" };
+  const yr = (pr) => `${pr.year}–${pr.year + pr.years - 1}`;
+  const cards = periods.map((pr, t) => {
+    const a = added(t), hit = perf[t].re + 1e-9 >= pr.re / 100;
+    const builds = KEYS4.filter(k => a[k] > 0).map(k => `<li><i class="sw" style="background:${COLORS[k]}"></i><span>${NAMES[k]}</span><b>+${a[k].toLocaleString()} MW</b></li>`).join("") || `<li><span>No new builds</span></li>`;
+    const oilChange = t ? pr.oil - periods[t - 1].oil : 0;
+    return `<article class="milestone">
+      <header><span class="yr">${pr.year}</span><span class="span">${yr(pr)}</span></header>
+      <ul class="adds">${builds}</ul>
+      ${oilChange < 0 ? `<p class="ret"><i class="sw" style="background:var(--s-oil)"></i>${Math.abs(oilChange).toLocaleString()} MW of oil retires</p>` : t === 0 ? `<p class="ret"><i class="sw" style="background:var(--s-oil)"></i>${pr.oil.toLocaleString()} MW of oil still running</p>` : ""}
+      <div class="re-meter" role="img" aria-label="${Math.round(perf[t].re * 100)}% renewable against a ${pr.re}% target">
+        <div class="track"><i style="width:${Math.min(100, perf[t].re * 100)}%"></i><b style="left:${Math.min(100, pr.re)}%" title="Target ${pr.re}%"></b></div>
+        <div class="re-lab"><span><b>${Math.round(perf[t].re * 100)}%</b> renewable</span><span class="chip ${hit ? "good" : "crit"}">target ${pr.re}%</span></div>
+      </div>
+      <p class="cost"><b>${fmtM(perf[t].total)}</b>/yr · $${perf[t].perMWh.toFixed(0)}/MWh</p>
+    </article>`;
+  }).join(`<span class="arrow" aria-hidden="true">→</span>`);
+  const views = [["cap", "What's installed"], ["mix", "Where the energy comes from"], ["cost", "What it costs each year"]];
+  el.innerHTML = `
+    <section class="answer">
+      <span class="k">The pathway · planned in one run</span>
+      <div class="hero-top">
+        <div class="hero-cost"><span class="n">$${(f.total / 1e9).toFixed(1)}B<small> present value, ${periods[0].year}–${periods[last].year + periods[last].years - 1}</small></span></div>
+        <div class="kpis">
+          <div class="kpi"><b>${Math.round(perf[0].re * 100)}% → ${Math.round(perf[last].re * 100)}%</b><span>renewable, ${periods[0].year} to ${periods[last].year}</span></div>
+          <div class="kpi"><b>${periods[0].oil.toLocaleString()} → ${periods[last].oil.toLocaleString()} MW</b><span>oil fleet</span></div>
+          <div class="kpi"><b>${totalNew.toLocaleString()} MW</b><span>new capacity built</span></div>
+        </div>
+      </div>
+      <div class="roadmap">${cards}</div>
+    </section>
+    <section class="panel"><header><h2>The pathway in charts</h2></header>
+      <div class="controls"><div class="seg" role="group" aria-label="Chart" id="pView"></div></div>
+      <div class="legend-row" id="pLegend"></div>
+      <div class="chart" id="pChart"></div>
+      <p class="note" id="pNote"></p></section>
+    <section class="panel"><header><h2>Compared with one period at a time</h2><p class="sub">This is what chaining Engage runs gives you: each period picks its cheapest option on top of what's already built, without looking ahead.</p></header>
+      <div class="tscroll"><table class="wrap"><thead><tr><th scope="col">Period</th><th scope="col" class="us">Planned together (GridPath)</th><th scope="col">One at a time (chained Engage runs)</th></tr></thead><tbody>
+      ${periods.map((pr, t) => `<tr><td>${pr.year}</td><td class="us">${planSentence(f.path[t])}</td><td>${m ? planSentence(m.path[t]) : "—"}</td></tr>`).join("")}
+      <tr><td>Whole path</td><td class="us">$${(f.total / 1e9).toFixed(3)}B</td><td>${m ? `$${(m.total / 1e9).toFixed(3)}B` : "No workable path"}</td></tr></tbody></table></div>
+      <p class="note">${!m ? "Going one period at a time hits a dead end: an early choice leaves no workable option later. Planning together avoids that." : diff / f.total > 0.005 ? `Planning together saves $${(diff / 1e6).toFixed(0)}M in present value (${(diff / f.total * 100).toFixed(1)}%). It avoids building things early that later periods make poor value.` : `Here the two approaches land almost in the same place${diff > 1e6 ? ` ($${(diff / 1e6).toFixed(0)}M apart, ${(diff / f.total * 100).toFixed(2)}%)` : ""}, because nothing built early becomes a poor choice later. Planning together still does it in one run instead of three hand-chained ones, and it guarantees the early choices leave a workable path to 2045.`} Totals are a present value, discounted at your rate.</p></section>`;
+  segB("pView", views, X.path.view, v => { X.path.view = v; drawPathView(); });
+  drawPathView();
+}
+function drawPathView() {
+  const { periods, out, perf, view } = X.path, f = out.foresight;
+  document.querySelectorAll("#pView button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === view)));
+  const chart = document.getElementById("pChart"), leg = document.getElementById("pLegend"), note = document.getElementById("pNote");
+  if (view === "cap") {
+    leg.innerHTML = STACK.map(s => `<span><i class="sw" style="background:${s[2]}"></i>${s[1]}</span>`).join("");
+    chart.innerHTML = pathChart(periods, f.path, out.fDetail);
+    note.textContent = "Megawatts installed in each period. Everything built stays; oil shrinks on the retirement schedule you set. Numbers beside each block are its size.";
+  } else if (view === "mix") {
+    const M = [["oil", "Existing oil", "var(--s-oil)"], ["firm", "New turbines (biodiesel)", "var(--s-firm)"], ["solar", "Solar", "var(--s-solar)"], ["wind", "Wind", "var(--s-wind)"]];
+    leg.innerHTML = M.map(s => `<span><i class="sw" style="background:${s[2]}"></i>${s[1]}</span>`).join("") + `<span><i class="sw dash"></i>Most allowed from ${X.path.bio ? "oil" : "oil and turbines"} (the target)</span>`;
+    chart.innerHTML = mixChart(periods, perf, M);
+    note.textContent = X.path.bio ? "Share of each period's electricity by source, with existing oil at the bottom. Everything above the oil counts as renewable, so the target is met when the oil block stays under the dashed line." : "Share of each period's electricity by source. Only solar and wind count as renewable, so oil and new turbines together must stay under the dashed line.";
+  } else {
+    leg.innerHTML = `<span><i class="sw" style="background:var(--s-wind)"></i>Paying for what's been built</span><span><i class="sw" style="background:var(--s-oil)"></i>Fuel and upkeep</span>`;
+    chart.innerHTML = costChart(periods, perf);
+    note.textContent = "Average annual cost in each period. Capital is each build's yearly payment at the price in the year it was built, so early builds keep costing their original price.";
+  }
+}
+function mixChart(periods, perf, M) {
+  const W = 720, H = 320, L = 52, R = 10, T = 14, B = 44, Y = v => T + (H - T - B) * (1 - v);
+  const gw = (W - L - R) / periods.length, bw = Math.min(130, gw * 0.6);
+  let g = "";
+  for (let v = 0; v <= 1.0001; v += 0.25) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+  periods.forEach((pr, t) => {
+    const cx = L + gw * t + gw / 2; let base = 0;
+    M.forEach(([k, name, c]) => {
+      const v = perf[t].mix[k]; if (v < 0.002) return;
+      g += `<rect x="${cx - bw / 2}" y="${Y(base + v)}" width="${bw}" height="${Y(base) - Y(base + v)}" style="fill:${c};stroke:var(--surface)" stroke-width="2"><title>${name}: ${Math.round(v * 100)}%</title></rect>`;
+      if (Y(base) - Y(base + v) > 13) g += `<text x="${cx + bw / 2 + 6}" y="${(Y(base) + Y(base + v)) / 2 + 4}">${Math.round(v * 100)}%</text>`;
+      base += v;
+    });
+    const ty = Y(1 - pr.re / 100);
+    g += `<line x1="${cx - bw / 2 - 8}" x2="${cx + bw / 2 + 8}" y1="${ty}" y2="${ty}" style="stroke:var(--ink)" stroke-width="2" stroke-dasharray="5 3"/>
+      <text x="${cx}" y="${H - B + 18}" text-anchor="middle" style="fill:var(--ink);font-family:var(--display);font-size:14px;font-weight:700">${pr.year}</text>
+      <text x="${cx}" y="${H - B + 34}" text-anchor="middle">${Math.round(perf[t].re * 100)}% renewable · target ${pr.re}%</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of electricity by source in each period, with the renewable target">${g}</svg>`;
+}
+function costChart(periods, perf) {
+  const W = 720, H = 320, L = 66, R = 10, T = 24, B = 44;
+  const ymax = Math.ceil(Math.max(...perf.map(x => x.total)) / 1e6 / 250) * 250;
+  const Y = v => T + (H - T - B) * (1 - v / 1e6 / ymax), gw = (W - L - R) / periods.length, bw = Math.min(110, gw * 0.55);
+  let g = "";
+  for (let v = 0; v <= ymax; v += 250) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v * 1e6)}" y2="${Y(v * 1e6)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y(v * 1e6) + 4}" text-anchor="end">$${v.toLocaleString()}M</text>`;
+  periods.forEach((pr, t) => {
+    const cx = L + gw * t + gw / 2, x = perf[t];
+    const parts = [[x.capital, "var(--s-wind)", "Paying for what's been built"], [x.running, "var(--s-oil)", "Fuel and upkeep"]];
+    let base = 0;
+    parts.forEach(([v, c, n]) => {
+      g += `<rect x="${cx - bw / 2}" y="${Y(base + v)}" width="${bw}" height="${Y(base) - Y(base + v)}" style="fill:${c};stroke:var(--surface)" stroke-width="2"><title>${n}: ${fmtM(v)}/yr</title></rect>`;
+      if (Y(base) - Y(base + v) > 15) g += `<text x="${cx + bw / 2 + 6}" y="${(Y(base) + Y(base + v)) / 2 + 4}">${fmtM(v)}</text>`;
+      base += v;
+    });
+    g += `<text x="${cx}" y="${Y(x.total) - 8}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${fmtM(x.total)}/yr</text>
+      <text x="${cx}" y="${H - B + 18}" text-anchor="middle" style="fill:var(--ink);font-family:var(--display);font-size:14px;font-weight:700">${pr.year}</text>
+      <text x="${cx}" y="${H - B + 34}" text-anchor="middle">$${x.perMWh.toFixed(0)}/MWh</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Annual cost in each period, split into capital and fuel and upkeep">${g}</svg>`;
+}
+function pathChart(periods, path, det) {
+  const W = 720, H = 320, L = 60, R = 10, T = 14, B = 44;
+  const tot = path.map((b, t) => b.solar + b.wind + b.batt + b.firm + periods[t].oil);
+  const ymax = Math.ceil(Math.max(...tot) / 1000) * 1000;
+  const Y = v => T + (H - T - B) * (1 - v / ymax), gw = (W - L - R) / periods.length, bw = Math.min(110, gw * 0.55);
+  let g = "";
+  for (let v = 0; v <= ymax; v += 1000) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" style="stroke:var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${v.toLocaleString()}</text>`;
+  g += `<text x="${L - 8}" y="${T - 2}" text-anchor="end" style="font-size:10px">MW</text>`;
+  periods.forEach((pr, t) => {
+    const cx = L + gw * t + gw / 2; let base = 0;
+    const vals = { ...path[t], oil: pr.oil };
+    STACK.forEach(([k, name, c]) => {
+      const v = vals[k]; if (v < 1) return;
+      g += `<rect x="${cx - bw / 2}" y="${Y(base + v)}" width="${bw}" height="${Y(base) - Y(base + v)}" style="fill:${c};stroke:var(--surface)" stroke-width="2"><title>${name}: ${Math.round(v).toLocaleString()} MW</title></rect>`;
+      if (Y(base) - Y(base + v) > 16) g += `<text x="${cx + bw / 2 + 6}" y="${(Y(base) + Y(base + v)) / 2 + 4}" style="fill:var(--muted)">${Math.round(v).toLocaleString()}</text>`;
+      base += v;
+    });
+    g += `<text x="${cx}" y="${H - B + 18}" text-anchor="middle" style="fill:var(--ink);font-family:var(--display);font-size:14px;font-weight:700">${pr.year}</text>
+      <text x="${cx}" y="${H - B + 34}" text-anchor="middle">${Math.round(det[t].re * 100)}% renewable</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Installed capacity in each period">${g}</svg>`;
+}
+
+/* ---------- Retirements ---------- */
+const UCOLS = [["mw", "Size", "MW"], ["built", "Built", ""], ["hr", "Heat rate", "MMBtu/MWh"], ["fom", "Upkeep", "$/kW-yr"]];
+document.getElementById("unitIn").innerHTML = `<thead><tr><th scope="col">Unit (dummy)</th>${UCOLS.map(c => `<th scope="col">${c[1]}${c[2] ? ` (${c[2]})` : ""}</th>`).join("")}</tr></thead><tbody>`
+  + UNITS_DEFAULT.map(u => `<tr><td>${u.name}</td><td>${u.mw}</td><td>${u.built}</td><td><input type="number" step="0.1" id="${u.id}-hr" value="${u.hr}" aria-label="${u.name} heat rate"></td><td><input type="number" step="5" id="${u.id}-fom" value="${u.fom}" aria-label="${u.name} upkeep"></td></tr>`).join("") + `</tbody>`;
+document.getElementById("retRun").addEventListener("click", runRet);
+function runRet() {
+  busyStatus("retStatus", "Testing each unit…", () => {
+    const units = UNITS_DEFAULT.map(u => {
+      const v = k => { const n = parseFloat(document.getElementById(`${u.id}-${k}`).value); return Number.isFinite(n) ? n : u[k]; };
+      return { ...u, hr: v("hr"), fom: v("fom") };
+    });
+    const p = { ...state.p };
+    const out = retirements(p, p.minRE, units);
+    if (out.engage) out.useE = unitUse(out.engage, p);
+    if (out.gridpath) out.useG = unitUse(out.gridpath, p);
+    X.ret = { units, out };
+    renderRet();
+  });
+}
+function renderRet() {
+  const { units, out } = X.ret, el = document.getElementById("retOut");
+  const { engage, gridpath, keep, steps } = out;
+  if (!engage || !gridpath) { el.innerHTML = `<section class="answer"><span class="k">No workable plan</span><p>With these settings no plan meets the renewable target and every hour of load. Lower the target in the side panel.</p></section>`; return; }
+  const retired = keep.filter(u => !u.keep), saved = engage.r.cost - gridpath.r.cost;
+  const dBuild = ["solar", "wind", "batt", "firm"].filter(k => gridpath.build[k] !== engage.build[k]).map(k => `${gridpath.build[k] > engage.build[k] ? "+" : "−"}${Math.abs(gridpath.build[k] - engage.build[k])} MW ${({ solar: "solar", wind: "wind", batt: "battery", firm: "new turbines" })[k]}`);
+  el.innerHTML = `
+    <section class="statrow">
+      <div class="stat"><span class="who">Engage · keeps every unit</span><span class="n">${fmtM(engage.r.cost)}/yr</span><p>Existing plants are a fixed input, so all ${units.length} units stay. Best build alongside them: ${planSentence(engage.build)}.</p></div>
+      <div class="stat hl"><span class="who">GridPath · decides each unit</span><span class="n">${retired.length ? `Retire ${retired.length}` : "Keep all"}</span><p>${retired.length ? `${retired.map(u => u.name).join(" and ")}. ${dBuild.length ? `Replaced by ${dBuild.join(", ")}.` : "Nothing new needed to replace them."}` : "Every unit is still worth more than it costs to replace."}</p></div>
+      <div class="stat ${saved > 1e5 ? "okk" : ""}"><span class="who">Saving</span><span class="n">${saved > 1e5 ? `${fmtM(saved)}/yr` : "None"}</span><p>${saved > 1e5 ? `${(saved / engage.r.cost * 100).toFixed(1)}% of the island's annual cost, with the same renewable target and every hour of load met.` : "Retiring any unit would cost more than keeping it."}</p></div>
+    </section>
+    <section class="panel"><header><h2>Unit by unit</h2><p class="sub">How hard each unit runs in Engage's plan, what it costs just to keep it available, and GridPath's decision. Units run cheapest-first by heat rate.</p></header>
+      <div class="tscroll"><table><thead><tr><th scope="col">Unit</th><th scope="col">Size</th><th scope="col">Heat rate</th><th scope="col">Runs (share of year at full output)</th><th scope="col">Upkeep per year</th><th scope="col">Decision</th></tr></thead><tbody>
+      ${units.slice().sort((a, b) => a.hr - b.hr).map(u => {
+        const cf = (out.useE[u.id] || 0) / (u.mw * 8760), k = keep.find(x => x.id === u.id).keep;
+        const step = steps.find(s => s.unit.id === u.id);
+        return `<tr><td>${u.name}<br><small style="color:var(--muted)">built ${u.built}</small></td><td>${u.mw} MW</td><td>${u.hr.toFixed(1)}</td><td><span class="bar-in"><i style="width:${Math.min(100, cf * 100)}%"></i></span>${Math.round(cf * 100)}%</td><td>${fmtM(u.mw * u.fom * 1000)}</td><td>${k ? `<span class="chip good">Keep</span>` : `<span class="chip crit">Retire</span>${step ? `<br><small style="color:var(--muted)">saves ${fmtM(step.saves)}/yr</small>` : ""}`}</td></tr>`;
+      }).join("")}</tbody></table></div>
+      <p class="note">The search retires one unit at a time, whichever saves the most, until no retirement saves money. Raise a unit's upkeep or heat rate and decide again to see the answer change.</p></section>`;
+}
+
+showTab("res");
+run();
+</script>
+
+</body></html>
