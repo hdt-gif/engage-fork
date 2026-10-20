@@ -14,6 +14,38 @@ tools could add to Engage's answer.
 | [`gridpath/index.html`](gridpath/index.html), "Engage Reliability Planner" | [GridPath](https://github.com/blue-marble/gridpath) | Reserves · Capacity credit (ELCC) · Pathway to 2045 · Retirements |
 | [`pypsa/index.html`](pypsa/index.html), "Engage Plan Explorer" | [PyPSA](https://github.com/PyPSA/PyPSA) | Alternatives (MGA) · Grid check (power flow, single line outages) · Uncertain futures (stochastic) |
 
+## How to open them
+
+You don't need to start Engage, Docker or anything else. Each prototype is a
+single HTML file that runs in your web browser.
+
+1. Make sure you're on the branch that has them. The `prototypes/` folder
+   doesn't exist on `dev` until this branch is merged:
+
+   ```bash
+   git checkout prototypes/gridpath-pypsa-addons
+   ```
+
+2. From the `engage-fork` folder, open one (macOS), or double-click the file in
+   Finder:
+
+   ```bash
+   open prototypes/gridpath/index.html
+   ```
+
+   ```bash
+   open prototypes/pypsa/index.html
+   ```
+
+Good to know:
+
+- **It takes a second or two to solve** when the page opens. The side panel
+  shows "Solved in 1.5 s on sample data" when it's ready. The Pathway,
+  Retirements and Uncertain futures tabs solve when you first open them.
+- **No internet needed**, apart from the fonts. Offline, the pages use your
+  system fonts instead; everything else works the same.
+- **Nothing is saved.** Changes you make to the inputs reset when you reload.
+
 ## Read this before showing them to anyone
 
 - **All data is dummy data.** The island is a made-up O‘ahu-sized system. Some
